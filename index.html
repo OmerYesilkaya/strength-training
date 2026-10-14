@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PPL Log</title>
+<meta name="description" content="Home push/pull/legs training log. The next session is prepared with last time's weights; you enter kg and reps.">
+<meta name="theme-color" content="#f3f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131614" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PPL Log">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout: phone-first, one column, three tabs in a bottom bar. Today's session is a form; history and the program sit behind the other tabs. */
+  :root {
+    --bg: #f3f4f1; --surface: #ffffff; --surface-2: #e9ebe6; --ink: #1a1d1b; --muted: #626a65; --line: #d6dad4;
+    --accent: #2a6b50; --accent-ink: #1d4f3a; --accent-soft: #e0ede6;
+    --warn-soft: #f4ead8; --warn-ink: #7a5212; --bad-soft: #f3e1df; --bad-ink: #8a3127;
+    --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131614; --surface: #1b1f1c; --surface-2: #232825; --ink: #e9ece7; --muted: #9ba39d; --line: #2e3430;
+      --accent: #6cc496; --accent-ink: #9fdcbd; --accent-soft: #1d3328;
+      --warn-soft: #3a2f1a; --warn-ink: #e3c07a; --bad-soft: #3a2220; --bad-ink: #e5a39b; color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  .wrap {
+    max-width: 720px; margin: 0 auto;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  h1 { font-size: 30px; line-height: 1.05; font-weight: 700; }
+  h2 { font-size: 22px; font-weight: 700; line-height: 1.15; }
+  h3 { font-size: 17px; font-weight: 600; }
+  p { margin: 0; }
+  a { color: var(--accent-ink); }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  [hidden] { display: none !important; }
+
+  header { display: flex; flex-direction: column; gap: 6px; }
+  .banner { border-radius: 10px; padding: 10px 14px; font-size: 14px; background: var(--warn-soft); color: var(--warn-ink); }
+  .banner.bad { background: var(--bad-soft); color: var(--bad-ink); }
+
+  /* Tabs */
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); z-index: 10; }
+  nav.tabs .inner { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+  nav.tabs button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; padding: 10px 0 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  nav.tabs button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  nav.tabs button[aria-selected="true"] { color: var(--accent); }
+  .view { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Session picker */
+  .picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .pick { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 8px; font: inherit; font-size: 13px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; align-items: flex-start; min-width: 0; text-align: left; }
+  .pick b { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+  .pick span { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  .pick[aria-pressed="true"] span { color: var(--accent-ink); }
+  .pick .next { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  :is(.pick, .btn, input, textarea, nav.tabs button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Today card */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .card-head .eyebrow { display: block; margin-bottom: 2px; }
+  input[type="date"] { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-height: 38px; }
+
+  .exlist { display: flex; flex-direction: column; }
+  .ex { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .ex-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .ex-name { font-weight: 600; line-height: 1.25; }
+  .ex-target { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+  .ex-hint { font-size: 13px; color: var(--muted); }
+  .ex-hint.up { color: var(--accent-ink); font-weight: 500; }
+  .ex-inputs { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .field label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .field input { width: 64px; font: inherit; font-family: var(--font-mono); font-size: 17px; font-weight: 600; text-align: center; padding: 9px 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); -moz-appearance: textfield; }
+  .field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .field input.kg { width: 76px; }
+  .field input.suggested { border-color: var(--accent); }
+  .addset { appearance: none; border: 1px dashed var(--line); background: transparent; color: var(--muted); border-radius: 8px; width: 40px; height: 44px; font: inherit; font-size: 20px; cursor: pointer; }
+
+  textarea { font: inherit; font-size: 15px; width: 100%; min-height: 56px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn { appearance: none; border: 0; border-radius: 10px; padding: 13px 20px; font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: #fff; min-height: 44px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 8px 12px; font-size: 14px; font-weight: 500; min-height: 38px; }
+  .btn.danger { background: transparent; color: var(--bad-ink); border: 1px solid var(--line); padding: 6px 10px; font-size: 13px; font-weight: 500; min-height: 34px; }
+  .status { font-size: 14px; color: var(--muted); }
+  .status.ok { color: var(--accent-ink); }
+  .status.bad { color: var(--bad-ink); }
+
+  /* History */
+  .hist { display: flex; flex-direction: column; gap: 10px; }
+  .entry { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .entry-head b { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+  .entry-head .date { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+  .lines { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
+  .lines .l { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lines .r { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .entry-notes { font-size: 13.5px; color: var(--muted); font-style: italic; }
+  .entry-foot { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+  .empty { padding: 24px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14.5px; text-align: center; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* Program view */
+  .facts { display: flex; flex-wrap: wrap; gap: 10px 24px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .fact { display: flex; flex-direction: column; gap: 0; min-width: 100px; }
+  .fact b { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.1; }
+  .fact span { font-size: 13px; color: var(--muted); }
+  .psession { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 6px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .psession-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .pill { font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); white-space: nowrap; }
+  .prow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+  .prow .n { font-weight: 600; }
+  .prow .sr { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .prow .note { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+  .rules { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .rule { display: flex; flex-direction: column; gap: 3px; padding-top: 10px; border-top: 2px solid var(--ink); }
+  .rule b { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+  .rule p { font-size: 14.5px; color: var(--muted); }
+  .ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; counter-reset: step; }
+  .ladder li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ladder li::before { content: counter(step); font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .ladder b { display: block; font-weight: 600; margin-bottom: 2px; }
+  .ladder p { color: var(--muted); font-size: 14.5px; }
+  .callout { background: var(--warn-soft); color: var(--warn-ink); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; }
+  .example { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; }
+  .example code { font-family: var(--font-mono); font-size: 13px; }
+  section { display: flex; flex-direction: column; gap: 12px; }
+
+  @media (min-width: 600px) {
+    .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .ex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; }
+    .ex-inputs { justify-content: flex-end; }
+    .rules { grid-template-columns: 1fr 1fr; gap: 14px 28px; }
+    h1 { font-size: 36px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { .pick, .btn, .field input, nav.tabs button { transition: border-color .15s ease, background-color .15s ease, color .15s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow" id="hdr-eyebrow">Training log</span>
+    <h1 id="hdr-title">Today</h1>
+    <div id="banner" class="banner" hidden></div>
+  </header>
+
+  <!-- Log -->
+  <div class="view" id="view-log">
+    <div class="picker" id="picker" role="group" aria-label="Choose session"></div>
+    <form id="today" class="card" autocomplete="off"></form>
+  </div>
+
+  <!-- History -->
+  <div class="view" id="view-history" hidden>
+    <div class="toolbar">
+      <span id="hist-count" class="muted" style="font-size:14px;flex:1"></span>
+      <button type="button" class="btn ghost" id="export-json">Export JSON</button>
+      <button type="button" class="btn ghost" id="export-csv">Export CSV</button>
+      <label class="btn ghost" for="import-file" style="cursor:pointer">Import JSON<input type="file" id="import-file" accept="application/json,.json" hidden></label>
+    </div>
+    <div id="hist" class="hist"></div>
+  </div>
+
+  <!-- Program -->
+  <div class="view" id="view-program" hidden>
+    <p class="muted">Low volume, high intensity, high frequency. Two hard sets per exercise, every muscle twice a week, sessions of half an hour. Two 40&nbsp;kg dumbbells, an adjustable bench, a pull-up bar, and a backpack.</p>
+    <div class="facts">
+      <div class="fact"><b>6</b><span>sessions per rotation</span></div>
+      <div class="fact"><b>2</b><span>working sets</span></div>
+      <div class="fact"><b>25–35 min</b><span>per session</span></div>
+      <div class="fact"><b>2×</b><span>each muscle per week</span></div>
+    </div>
+
+    <section>
+      <h2>How every set is done</h2>
+      <div class="rules">
+        <div class="rule"><b>Two working sets</b><p>Set 1 stops with 1 rep in reserve. Set 2 goes to concentric failure: you cannot complete another rep with good form. Stop before form breaks down, not after.</p></div>
+        <div class="rule"><b>Warm up once</b><p>Only the first compound of the session gets warm-up sets: about 50% for 8 reps, then 75% for 4. Everything after that is already warm.</p></div>
+        <div class="rule"><b>Slow, controlled reps</b><p>One second up, two to three seconds down, no bounce. This is what makes two sets enough, and what makes 40&nbsp;kg dumbbells enough.</p></div>
+        <div class="rule"><b>Rest fully</b><p>Two to three minutes between compound sets, about 90 seconds on isolation work. If a session runs past 35 minutes, you are resting too long or adding exercises.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>The six sessions</h2>
+      <p class="muted">Run them in order. Rest whenever you want and continue where you left off. Default is six on, one off. Weights are per dumbbell.</p>
+      <div id="program-sessions" style="display:flex;flex-direction:column;gap:12px"></div>
+    </section>
+
+    <section>
+      <h2>Progression</h2>
+      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you.</p>
+      <div class="example"><b>Example.</b> Flat press, 2 × 6–10. You get <code>32 kg × 10</code> and <code>× 8</code>. Set 1 hit 10, so next time use 34&nbsp;kg. You get <code>34 × 7</code> and <code>× 6</code>. Keep 34 until set 1 reaches 10 again.</div>
+    </section>
+
+    <section>
+      <h2>When the weights run out</h2>
+      <p class="muted">Raise intensity, do not add sets. Work down this list in order.</p>
+      <ol class="ladder">
+        <li><div><b>Slow the eccentric to 4–5 seconds</b><p>A 40&nbsp;kg Romanian deadlift with a five-second lowering is a different exercise.</p></div></li>
+        <li><div><b>Pause at the hardest point</b><p>Two seconds at the bottom of a press, squat, or Romanian deadlift.</p></div></li>
+        <li><div><b>Go single-leg or single-arm</b><p>Half the muscle, same dumbbell.</p></div></li>
+        <li><div><b>Load the backpack</b><p>Pull-ups, chin-ups, push-ups, and dips between the bench and a chair all take up to +40&nbsp;kg.</p></div></li>
+        <li><div><b>Rest-pause on set 2</b><p>Hit failure, rest 15 seconds, do more reps, rest 15 seconds, do more. One set, three mini-failures.</p></div></li>
+        <li><div><b>Then, and only then, a third or fourth set</b><p>Mainly for the hinge movements, where load is most limited. The plus button in the log adds one.</p></div></li>
+      </ol>
+      <div class="callout"><b>Deadlift.</b> A conventional dumbbell deadlift at 2 × 40&nbsp;kg will feel easy, so it is not in the plan. The Romanian deadlift and single-leg Romanian deadlift replace it.</div>
+    </section>
+
+    <section>
+      <h2>Rest and recovery</h2>
+      <div class="rules">
+        <div class="rule"><b>Rest days are yours to place</b><p>The rotation does not care which day of the week it is. Default is one rest day per week.</p></div>
+        <div class="rule"><b>Deload on a signal, or every 8 weeks</b><p>Deload when set 1 numbers drop two sessions in a row on two or more exercises, or every eight weeks. Four to five days off, or one rotation at one set per exercise with two reps in reserve.</p></div>
+        <div class="rule"><b>Sleep and food make two sets work</b><p>If you are under-recovered, the symptom is stalled numbers. Fix recovery before touching the program.</p></div>
+        <div class="rule"><b>Joint pain is a stop sign</b><p>Swap the exercise and come back later. Flat press to push-up, overhead press to incline press, pull-up to row.</p></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="inner">
+    <button type="button" data-tab="log" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Log</button>
+    <button type="button" data-tab="history" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>History</button>
+    <button type="button" data-tab="program" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M18 5v14"/><path d="M3 8v8"/><path d="M21 8v8"/><path d="M6 12h12"/></svg>Program</button>
+  </div>
+</nav>
+
+<script>
+(function () {
+  'use strict';
+
+  var STEP = 2; // kg per dumbbell when set 1 hits the top of its range
+  var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab';
+
+  var PROGRAM = [
+    { key: 'pushA', name: 'Push A', focus: 'Chest', ex: [
+      { key: 'flat_press', name: 'Flat dumbbell press', reps: [6, 10], warm: true },
+      { key: 'incline_press', name: 'Incline dumbbell press', reps: [8, 12], note: 'Bench at 30–45°' },
+      { key: 'ohp', name: 'Seated overhead press', reps: [6, 10], note: 'Bench at 80–90°' },
+      { key: 'lateral_raise', name: 'Lateral raise', reps: [12, 20], note: 'Slight lean, no swing' },
+      { key: 'oh_triceps', name: 'Overhead triceps extension', reps: [10, 15], note: 'One dumbbell, two hands' }
+    ]},
+    { key: 'pullA', name: 'Pull A', focus: 'Lats', ex: [
+      { key: 'pullup', name: 'Weighted pull-up', reps: [5, 8], warm: true, load: 'bw', note: 'Backpack with one dumbbell. Warm up with two bodyweight sets' },
+      { key: 'db_row', name: 'One-arm dumbbell row', reps: [8, 12], per: 'arm', note: 'Knee and hand on the bench' },
+      { key: 'rear_delt', name: 'Rear delt fly', reps: [12, 20], note: 'Chest on incline bench' },
+      { key: 'db_curl', name: 'Dumbbell curl', reps: [8, 12], note: 'Standing' },
+      { key: 'leg_raise', name: 'Hanging leg raise', reps: [10, 15], load: 'bw', note: 'Bent knees are fine to start' }
+    ]},
+    { key: 'legsA', name: 'Legs A', focus: 'Quads', ex: [
+      { key: 'bss', name: 'Bulgarian split squat', reps: [8, 12], warm: true, per: 'leg', note: 'Rear foot on the bench, dumbbells in hands' },
+      { key: 'rdl', name: 'Romanian deadlift', reps: [8, 12], note: 'Three-second lowering' },
+      { key: 'goblet', name: 'Goblet or front squat', reps: [10, 15], note: 'Front squat: dumbbells on the shoulders' },
+      { key: 'calf', name: 'Single-leg calf raise', reps: [10, 15], per: 'leg', note: 'Hold one dumbbell. Full pause at the bottom stretch' }
+    ]},
+    { key: 'pushB', name: 'Push B', focus: 'Shoulders', ex: [
+      { key: 'ohp', name: 'Seated overhead press', reps: [6, 10], warm: true },
+      { key: 'incline_press', name: 'Incline dumbbell press', reps: [8, 12], note: 'Bench at 30°' },
+      { key: 'pushup_fly', name: 'Weighted push-up or fly', reps: [10, 15], load: 'bw', note: 'Push-up: backpack on, hands on the dumbbells for depth' },
+      { key: 'lateral_raise', name: 'Lateral raise', reps: [12, 20] },
+      { key: 'skull', name: 'Lying skull crusher', reps: [10, 15] }
+    ]},
+    { key: 'pullB', name: 'Pull B', focus: 'Upper back', ex: [
+      { key: 'cs_row', name: 'Chest-supported row', reps: [8, 12], warm: true, note: 'Chest on 30–45° incline bench' },
+      { key: 'chinup', name: 'Chin-up', reps: [6, 10], load: 'bw', note: 'Underhand grip. Backpack once set 1 reaches 10' },
+      { key: 'shrug', name: 'Dumbbell shrug', reps: [10, 15], note: 'One-second hold at the top' },
+      { key: 'incline_curl', name: 'Incline or hammer curl', reps: [8, 12] },
+      { key: 'leg_raise', name: 'Hanging leg raise', reps: [10, 15], load: 'bw' }
+    ]},
+    { key: 'legsB', name: 'Legs B', focus: 'Hams, glutes', ex: [
+      { key: 'sl_rdl', name: 'Single-leg Romanian deadlift', reps: [8, 12], warm: true, per: 'leg', note: 'One dumbbell in the opposite hand, or both' },
+      { key: 'lunge', name: 'Reverse lunge or step-up', reps: [8, 12], per: 'leg' },
+      { key: 'hip_thrust', name: 'Hip thrust', reps: [10, 15], note: 'Upper back on the bench, dumbbell across the hips, pause at the top' },
+      { key: 'calf', name: 'Single-leg calf raise', reps: [10, 15], per: 'leg' }
+    ]}
+  ];
+
+  var history = [];        // newest first
+  var selected = 0;        // index into PROGRAM
+  var autoSelected = true; // selected follows "up next" until the user picks
+  var draft = null;        // { session, date, ex: { key: { kg, sets: [], suggested } }, notes }
+  var deleteArmed = null;
+  var storageOk = true;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var picker = $('picker'), form = $('today'), hist = $('hist'), banner = $('banner'), histCount = $('hist-count');
+
+  // ---------- storage ----------
+  function readJSON(key, fallback) { try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; } catch (e) { return fallback; } }
+  function writeJSON(key, val) { try { if (val == null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { storageOk = false; return false; } }
+  function loadHistory() { var list = readJSON(STORE_KEY, []); if (!Array.isArray(list)) list = []; history = list; sortHistory(); }
+  function persistHistory() { sortHistory(); if (!writeJSON(STORE_KEY, history)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
+  function sortHistory() { history.sort(function (a, b) { return (b.finishedAt || '').localeCompare(a.finishedAt || ''); }); }
+  function saveDraft() { writeJSON(DRAFT_KEY, draft); }
+  function uid() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+
+  // ---------- helpers ----------
+  function todayISO() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+  function fmtDate(iso) { var p = (iso || '').split('-'); if (p.length < 3) return iso || ''; var d = new Date(+p[0], +p[1] - 1, +p[2]); return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); }
+  function fmtKg(ex, kg) { if (kg == null || kg === '') return ex.load === 'bw' ? 'bodyweight' : '—'; if (ex.load === 'bw') return kg === 0 ? 'bodyweight' : '+' + kg + ' kg'; return kg + ' kg'; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(v) { if (v === '' || v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
+  function sessionByKey(k) { return PROGRAM.find(function (s) { return s.key === k; }); }
+  function exInSession(s, k) { return s ? s.ex.find(function (x) { return x.key === k; }) : null; }
+
+  function nextIndex() {
+    if (!history.length) return 0;
+    var i = PROGRAM.findIndex(function (s) { return s.key === history[0].session; });
+    return i < 0 ? 0 : (i + 1) % PROGRAM.length;
+  }
+  function lastFor(exKey) {
+    for (var i = 0; i < history.length; i++) {
+      var exs = history[i].exercises || [];
+      for (var j = 0; j < exs.length; j++) if (exs[j].key === exKey && exs[j].sets && exs[j].sets.length) return { kg: exs[j].kg, sets: exs[j].sets, date: history[i].date };
+    }
+    return null;
+  }
+  function suggest(ex) {
+    var last = lastFor(ex.key);
+    if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' reps.', up: false };
+    var s1 = last.sets[0]; var lastKg = last.kg == null ? 0 : last.kg;
+    if (s1 != null && s1 >= ex.reps[1]) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1 + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', up: true };
+    return { kg: lastKg, hint: fmtDate(last.date) + ': ' + fmtKg(ex, lastKg) + ' · ' + last.sets.join(' / '), up: false };
+  }
+  function ensureDraft() {
+    var s = PROGRAM[selected];
+    if (!draft || draft.session !== s.key) draft = { session: s.key, date: todayISO(), ex: {}, notes: '' };
+    s.ex.forEach(function (ex) {
+      if (!draft.ex[ex.key]) { var sg = suggest(ex); draft.ex[ex.key] = { kg: sg.kg === '' ? '' : String(sg.kg), sets: ['', ''], suggested: sg.up }; }
+    });
+  }
+  function draftTouched() {
+    if (!draft) return false;
+    var keys = Object.keys(draft.ex || {});
+    for (var i = 0; i < keys.length; i++) if (draft.ex[keys[i]].sets.some(function (v) { return v !== ''; })) return true;
+    return !!(draft.notes && draft.notes.trim());
+  }
+  function showBanner(msg, bad) { banner.textContent = msg; banner.className = 'banner' + (bad ? ' bad' : ''); banner.hidden = false; }
+  function setStatus(msg, cls) { var el = $('status'); if (!el) return; el.textContent = msg; el.className = 'status' + (cls ? ' ' + cls : ''); }
+
+  // ---------- render: log ----------
+  function renderPicker() {
+    var nx = nextIndex();
+    picker.innerHTML = PROGRAM.map(function (s, i) {
+      return '<button type="button" class="pick" data-i="' + i + '" aria-pressed="' + (i === selected) + '"><b>' + esc(s.name) + '</b><span>' + esc(s.focus) + '</span>' + (i === nx ? '<span class="next">up next</span>' : '') + '</button>';
+    }).join('');
+  }
+  function renderToday() {
+    ensureDraft();
+    var s = PROGRAM[selected];
+    var html = '<div class="card-head"><div><span class="eyebrow">' + esc(s.name) + ' · ' + esc(s.focus) + '</span><h2>' + (selected === nextIndex() ? 'Up next' : 'Session') + '</h2></div>' +
+      '<div class="field" style="align-items:flex-start"><label for="date">Date</label><input type="date" id="date" value="' + esc(draft.date) + '"></div></div><div class="exlist">';
+    s.ex.forEach(function (ex) {
+      var d = draft.ex[ex.key]; var sg = suggest(ex);
+      html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? ' <span class="eyebrow" style="font-size:10px">warm up</span>' : '') + '</div>' +
+        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.up ? ' up' : '') + '">' + esc(sg.hint) + '</div></div><div class="ex-inputs">';
+      html += '<div class="field"><label for="kg-' + ex.key + '">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</label><input class="kg' + (d.suggested ? ' suggested' : '') + '" type="number" inputmode="decimal" step="0.5" min="0" id="kg-' + ex.key + '" data-k="kg" value="' + esc(d.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '"></div>';
+      d.sets.forEach(function (v, i) {
+        html += '<div class="field"><label for="s' + (i + 1) + '-' + ex.key + '">set ' + (i + 1) + '</label><input type="number" inputmode="numeric" min="0" max="100" id="s' + (i + 1) + '-' + ex.key + '" data-k="set" data-i="' + i + '" value="' + esc(v) + '" placeholder="reps"></div>';
+      });
+      if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '" title="Add a set" aria-label="Add a set">+</button>';
+      html += '</div></div>';
+    });
+    html += '</div><div class="field" style="align-items:stretch"><label for="notes" style="align-self:flex-start">Notes</label><textarea id="notes" placeholder="Anything worth remembering: felt heavy, form cue, slept badly…">' + esc(draft.notes || '') + '</textarea></div>';
+    html += '<div class="actions"><button type="submit" class="btn" id="save">Save session</button><button type="button" class="btn ghost" id="clear">Clear</button><span class="status" id="status"></span></div>';
+    form.innerHTML = html;
+  }
+
+  // ---------- render: history ----------
+  function renderHistory() {
+    histCount.textContent = history.length ? history.length + ' session' + (history.length === 1 ? '' : 's') : 'No sessions yet';
+    if (!history.length) { hist.innerHTML = '<div class="empty">Nothing logged yet. Save your first session from the Log tab and it appears here.</div>'; return; }
+    hist.innerHTML = history.map(function (h) {
+      var s = sessionByKey(h.session);
+      var lines = (h.exercises || []).map(function (e) {
+        var ex = exInSession(s, e.key) || { name: e.name, load: e.load };
+        return '<div class="l">' + esc(e.name || ex.name) + '</div><div class="r">' + esc(fmtKg(ex, e.kg)) + ' · ' + esc((e.sets || []).join(' / ')) + '</div>';
+      }).join('');
+      var armed = deleteArmed === h.id;
+      return '<div class="entry"><div class="entry-head"><b>' + esc(h.sessionName || (s ? s.name : h.session)) + '</b><span class="date">' + esc(fmtDate(h.date)) + '</span></div><div class="lines">' + lines + '</div>' +
+        (h.notes ? '<div class="entry-notes">' + esc(h.notes) + '</div>' : '') +
+        '<div class="entry-foot">' + (armed
+          ? '<span class="status">Delete this session?</span><button type="button" class="btn danger" data-del-confirm="' + esc(h.id) + '">Yes, delete</button><button type="button" class="btn ghost" data-del-cancel="1">Keep</button>'
+          : '<button type="button" class="btn ghost" data-del="' + esc(h.id) + '" style="padding:4px 10px;font-size:12.5px;min-height:30px">Delete</button>') + '</div></div>';
+    }).join('');
+  }
+
+  // ---------- render: program ----------
+  function renderProgram() {
+    $('program-sessions').innerHTML = PROGRAM.map(function (s, i) {
+      return '<div class="psession"><div class="psession-head"><div><span class="eyebrow">' + esc(s.name) + '</span><h3>' + esc(s.focus) + '</h3></div><span class="pill">Day ' + (i + 1) + '</span></div><div>' +
+        s.ex.map(function (ex) {
+          return '<div class="prow"><div class="n">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div><div class="sr">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div>' + (ex.note ? '<div class="note">' + esc(ex.note) + '</div>' : '') + '</div>';
+        }).join('') + '</div></div>';
+    }).join('');
+  }
+
+  // ---------- tabs ----------
+  var TITLES = { log: ['Training log', 'Today'], history: ['Training log', 'History'], program: ['Program', 'Home Push Pull Legs'] };
+  function showTab(name) {
+    if (!TITLES[name]) name = 'log';
+    ['log', 'history', 'program'].forEach(function (t) { $('view-' + t).hidden = (t !== name); });
+    document.querySelectorAll('nav.tabs button').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === name)); });
+    $('hdr-eyebrow').textContent = TITLES[name][0]; $('hdr-title').textContent = TITLES[name][1];
+    try { localStorage.setItem(TAB_KEY, name); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  document.querySelector('nav.tabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (b) showTab(b.getAttribute('data-tab')); });
+
+  // ---------- events: log ----------
+  picker.addEventListener('click', function (e) {
+    var b = e.target.closest('.pick'); if (!b) return;
+    var i = +b.getAttribute('data-i'); if (i === selected) return;
+    if (draftTouched()) { setStatus('You have unsaved reps in this session. Save or clear them first.', 'bad'); return; }
+    selected = i; autoSelected = false; draft = null; saveDraft(); renderPicker(); renderToday();
+  });
+  form.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.id === 'date') { draft.date = t.value || todayISO(); saveDraft(); return; }
+    if (t.id === 'notes') { draft.notes = t.value; saveDraft(); return; }
+    var row = t.closest('.ex'); if (!row) return;
+    var d = draft.ex[row.getAttribute('data-ex')];
+    if (t.getAttribute('data-k') === 'kg') { d.kg = t.value; d.suggested = false; t.classList.remove('suggested'); }
+    else if (t.getAttribute('data-k') === 'set') d.sets[+t.getAttribute('data-i')] = t.value;
+    saveDraft();
+  });
+  form.addEventListener('click', function (e) {
+    var add = e.target.closest('[data-add]');
+    if (add) { var k = add.getAttribute('data-add'); draft.ex[k].sets.push(''); saveDraft(); renderToday(); $('s' + draft.ex[k].sets.length + '-' + k).focus(); return; }
+    if (e.target.id === 'clear') { draft = null; saveDraft(); renderToday(); }
+  });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var s = PROGRAM[selected]; var exercises = [];
+    s.ex.forEach(function (ex) {
+      var d = draft.ex[ex.key]; var sets = d.sets.map(num).filter(function (v) { return v != null; });
+      if (!sets.length) return;
+      var kg = num(d.kg); if (ex.load === 'bw' && kg == null) kg = 0;
+      exercises.push({ key: ex.key, name: ex.name, load: ex.load || 'db', kg: kg, sets: sets });
+    });
+    if (!exercises.length) { setStatus('Enter reps for at least one exercise.', 'bad'); return; }
+    history.unshift({ id: uid(), date: draft.date || todayISO(), session: s.key, sessionName: s.name, exercises: exercises, notes: (draft.notes || '').trim(), finishedAt: new Date().toISOString() });
+    persistHistory();
+    draft = null; saveDraft(); autoSelected = true; selected = nextIndex();
+    renderPicker(); renderToday(); renderHistory();
+    setStatus('Saved. ' + PROGRAM[selected].name + ' is up next.', 'ok');
+  });
+
+  // ---------- events: history ----------
+  hist.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.hasAttribute('data-del')) { deleteArmed = t.getAttribute('data-del'); renderHistory(); return; }
+    if (t.hasAttribute('data-del-cancel')) { deleteArmed = null; renderHistory(); return; }
+    if (t.hasAttribute('data-del-confirm')) {
+      var id = t.getAttribute('data-del-confirm'); deleteArmed = null;
+      history = history.filter(function (h) { return h.id !== id; }); persistHistory();
+      if (autoSelected && !draftTouched()) { selected = nextIndex(); draft = null; saveDraft(); }
+      renderPicker(); renderToday(); renderHistory();
+    }
+  });
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type }); var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  $('export-json').addEventListener('click', function () { download('ppl-log-' + todayISO() + '.json', JSON.stringify({ exported: new Date().toISOString(), sessions: history }, null, 2), 'application/json'); });
+  $('export-csv').addEventListener('click', function () {
+    var rows = [['date', 'session', 'exercise', 'kg', 'set1', 'set2', 'set3', 'set4', 'notes']];
+    history.slice().reverse().forEach(function (h) { (h.exercises || []).forEach(function (e) { rows.push([h.date, h.sessionName, e.name, e.kg == null ? '' : e.kg, e.sets[0] == null ? '' : e.sets[0], e.sets[1] == null ? '' : e.sets[1], e.sets[2] == null ? '' : e.sets[2], e.sets[3] == null ? '' : e.sets[3], h.notes || '']); }); });
+    download('ppl-log-' + todayISO() + '.csv', rows.map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\n'), 'text/csv');
+  });
+  $('import-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return; var input = this;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var data = JSON.parse(r.result); var list = Array.isArray(data) ? data : data.sessions;
+        if (!Array.isArray(list)) throw new Error('no sessions array');
+        var seen = {}; history.forEach(function (h) { seen[h.id] = true; }); var added = 0;
+        list.forEach(function (h) { if (h && h.session && Array.isArray(h.exercises) && !seen[h.id]) { if (!h.id) h.id = uid(); history.push(h); seen[h.id] = true; added++; } });
+        persistHistory(); if (autoSelected && !draftTouched()) { selected = nextIndex(); draft = null; saveDraft(); }
+        renderPicker(); renderToday(); renderHistory();
+        showBanner('Imported ' + added + ' session' + (added === 1 ? '' : 's') + '.');
+      } catch (err) { showBanner('Could not import that file. It must be a JSON export from this app.', true); }
+      input.value = '';
+    };
+    r.readAsText(f);
+  });
+
+  // ---------- boot ----------
+  loadHistory();
+  draft = readJSON(DRAFT_KEY, null);
+  if (draft && !draftTouched()) draft = null;
+  if (draft) { var di = PROGRAM.findIndex(function (s) { return s.key === draft.session; }); if (di >= 0) { selected = di; autoSelected = (di === nextIndex()); } else draft = null; }
+  if (!draft) selected = nextIndex();
+  renderPicker(); renderToday(); renderHistory(); renderProgram();
+  var tab = 'log'; try { tab = localStorage.getItem(TAB_KEY) || 'log'; } catch (e) {}
+  showTab(tab);
+  try { localStorage.setItem('ppl.probe', '1'); localStorage.removeItem('ppl.probe'); } catch (e) { showBanner('Storage is blocked in this browser, so sessions cannot be saved. Open the app in a normal (non-private) tab.', true); }
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
