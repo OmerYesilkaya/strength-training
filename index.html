@@ -118,15 +118,16 @@
   .ex-target { font-size: 12.5px; color: var(--muted); font-weight: 600; }
   .ex-hint { font-size: 13px; color: var(--muted); }
   .ex-hint.up { color: var(--accent-ink); font-weight: 600; }
-  .ex-inputs { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
-  .field { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .sets { display: grid; grid-template-columns: 48px 84px 72px; gap: 6px 8px; align-items: center; }
+  .sets .h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  .sets .n { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .sets input { width: 100%; min-width: 0; font: inherit; font-size: 17px; font-weight: 700; text-align: center; padding: 10px 4px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; }
+  .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .sets input.suggested { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  .addset { grid-column: 1 / -1; justify-self: start; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .addset svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+  .field { display: flex; flex-direction: column; gap: 3px; }
   .field label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
-  .field input { width: 64px; font: inherit; font-size: 17px; font-weight: 700; text-align: center; padding: 10px 4px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; }
-  .field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .field input.kg { width: 76px; }
-  .field input.suggested { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-  .addset { appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; width: 40px; height: 47px; padding: 0; margin: 0; display: grid; place-items: center; cursor: pointer; }
-  .addset svg { width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
   .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
 
   textarea { font: inherit; font-size: 15px; width: 100%; min-height: 56px; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--ink); resize: vertical; }
@@ -200,12 +201,12 @@
   @media (min-width: 560px) {
     .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .ex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; }
-    .ex-inputs { justify-content: flex-end; }
+    .sets { justify-self: end; }
     .rules { grid-template-columns: 1fr 1fr; }
     .facts { grid-template-columns: repeat(4, 1fr); }
     h1 { font-size: 36px; }
   }
-  @media (prefers-reduced-motion: no-preference) { .pick, .btn, .field input, nav.tabs button, .navbtn { transition: border-color .15s ease, background-color .15s ease, color .15s ease; } }
+  @media (prefers-reduced-motion: no-preference) { .pick, .btn, .sets input, nav.tabs button, .navbtn { transition: border-color .15s ease, background-color .15s ease, color .15s ease; } }
 </style>
 </head>
 <body>
@@ -280,7 +281,7 @@
 
     <section>
       <h2>Progression</h2>
-      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you.</p>
+      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. Each set also has its own weight: when a set reaches the top of the range, the log pre-fills the next set 2&nbsp;kg heavier, so you can go up within the same session.</p>
       <div class="example"><b>Example.</b> Flat press, 2 × 6–10. You get 32 kg × 10 and × 8. Set 1 hit 10, so next time use 34&nbsp;kg. You get 34 × 7 and × 6. Keep 34 until set 1 reaches 10 again.</div>
     </section>
 
@@ -373,7 +374,7 @@
   var history = [];        // newest first
   var selected = 0;        // index into PROGRAM
   var autoSelected = true; // selected follows "up next" until the user picks
-  var draft = null;        // { session, date, ex: { key: { kg, sets: [], suggested } }, notes }
+  var draft = null;        // { v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested } }, notes }
   var deleteArmed = null;
   var calMonth = startOfMonth(new Date());
 
@@ -383,7 +384,21 @@
   // ---------- storage ----------
   function readJSON(key, fallback) { try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; } catch (e) { return fallback; } }
   function writeJSON(key, val) { try { if (val == null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } }
-  function loadHistory() { var list = readJSON(STORE_KEY, []); if (!Array.isArray(list)) list = []; history = list; sortHistory(); }
+  function loadHistory() {
+    var list = readJSON(STORE_KEY, []); if (!Array.isArray(list)) list = [];
+    var changed = false; list.forEach(function (h) { if (normalizeSession(h)) changed = true; });
+    history = list; sortHistory(); if (changed) persistHistory();
+  }
+  // Sessions logged before per-set weights stored one kg per exercise and reps-only sets. Convert them in place.
+  function normalizeSession(h) {
+    var changed = false;
+    (h.exercises || []).forEach(function (e) {
+      if (!Array.isArray(e.sets)) { e.sets = []; changed = true; }
+      e.sets = e.sets.map(function (st) { if (st && typeof st === 'object') return st; changed = true; return { kg: e.kg == null ? null : e.kg, reps: st }; });
+      if ('kg' in e) { delete e.kg; changed = true; }
+    });
+    return changed;
+  }
   function persistHistory() { sortHistory(); if (!writeJSON(STORE_KEY, history)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
   function sortHistory() { history.sort(function (a, b) { return (b.finishedAt || '').localeCompare(a.finishedAt || ''); }); }
   function saveDraft() { writeJSON(DRAFT_KEY, draft); }
@@ -402,6 +417,12 @@
 
   // ---------- helpers ----------
   function fmtKg(ex, kg) { if (kg == null || kg === '') return ex.load === 'bw' ? 'bodyweight' : '—'; if (ex.load === 'bw') return kg === 0 ? 'bodyweight' : '+' + kg + ' kg'; return kg + ' kg'; }
+  function fmtSets(ex, sets) {
+    sets = sets || []; if (!sets.length) return '—';
+    var same = sets.every(function (st) { return st.kg === sets[0].kg; });
+    if (same) return fmtKg(ex, sets[0].kg) + ' · ' + sets.map(function (st) { return st.reps; }).join(' / ');
+    return sets.map(function (st) { return fmtKg(ex, st.kg) + ' × ' + st.reps; }).join(' · ');
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function num(v) { if (v === '' || v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
   function sessionByKey(k) { return PROGRAM.find(function (s) { return s.key === k; }); }
@@ -417,29 +438,56 @@
   function lastFor(exKey) {
     for (var i = 0; i < history.length; i++) {
       var exs = history[i].exercises || [];
-      for (var j = 0; j < exs.length; j++) if (exs[j].key === exKey && exs[j].sets && exs[j].sets.length) return { kg: exs[j].kg, sets: exs[j].sets, date: history[i].date };
+      for (var j = 0; j < exs.length; j++) if (exs[j].key === exKey && exs[j].sets && exs[j].sets.length) return { sets: exs[j].sets, date: history[i].date };
     }
     return null;
   }
   function suggest(ex) {
     var last = lastFor(ex.key);
     if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' reps.', up: false };
-    var s1 = last.sets[0]; var lastKg = last.kg == null ? 0 : last.kg;
-    if (s1 != null && s1 >= ex.reps[1]) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1 + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', up: true };
-    return { kg: lastKg, hint: fmtDate(last.date) + ': ' + fmtKg(ex, lastKg) + ' · ' + last.sets.join(' / '), up: false };
+    var s1 = last.sets[0]; var lastKg = s1.kg;
+    if (lastKg != null && s1.reps != null && s1.reps >= ex.reps[1]) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1.reps + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', up: true };
+    return { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), up: false };
   }
   function ensureDraft() {
     var s = PROGRAM[selected];
-    if (!draft || draft.session !== s.key) draft = { session: s.key, date: todayISO(), ex: {}, notes: '' };
+    if (!draft || draft.v !== 2 || draft.session !== s.key) draft = { v: 2, session: s.key, date: todayISO(), ex: {}, notes: '' };
     s.ex.forEach(function (ex) {
-      if (!draft.ex[ex.key]) { var sg = suggest(ex); draft.ex[ex.key] = { kg: sg.kg === '' ? '' : String(sg.kg), sets: ['', ''], suggested: sg.up }; }
+      if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '' }, { kg: kg, reps: '' }], suggested: sg.up }; }
     });
   }
   function draftTouched() {
     if (!draft) return false;
     var keys = Object.keys(draft.ex || {});
-    for (var i = 0; i < keys.length; i++) if (draft.ex[keys[i]].sets.some(function (v) { return v !== ''; })) return true;
+    for (var i = 0; i < keys.length; i++) if (draft.ex[keys[i]].sets.some(function (st) { return st.reps !== ''; })) return true;
     return !!(draft.notes && draft.notes.trim());
+  }
+  // Set weights within a session. A set without reps "mirrors" the set before it: it carries the same kg,
+  // or that kg plus one step once the previous set reaches the top of the rep range. Mirroring sets follow
+  // edits automatically; a set the user typed a different kg into is left alone.
+  function stepOf(kg) { var n = num(kg); return n == null ? null : String(n + STEP); }
+  function mirrors(d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg)); }
+  function isStepped(ex, d, j) { if (j === 0) return false; var prev = d.sets[j - 1]; return d.sets[j].kg !== '' && d.sets[j].kg === stepOf(prev.kg) && num(prev.reps) != null && num(prev.reps) >= ex.reps[1]; }
+  function setKg(d, j, value) {
+    var prevOld = d.sets[j].kg; if (prevOld === value) return;
+    d.sets[j].kg = value;
+    for (var k = j + 1; k < d.sets.length; k++) {
+      var st = d.sets[k]; if (st.reps !== '' || (st.kg !== prevOld && st.kg !== stepOf(prevOld))) break;
+      prevOld = st.kg; st.kg = value;
+    }
+  }
+  function applySteps(ex, d, from) {
+    for (var j = from; j < d.sets.length - 1; j++) {
+      var cur = d.sets[j]; if (!mirrors(d, j + 1) || num(cur.kg) == null) continue;
+      setKg(d, j + 1, num(cur.reps) != null && num(cur.reps) >= ex.reps[1] ? stepOf(cur.kg) : cur.kg);
+    }
+  }
+  function syncRow(row, ex, d) {
+    d.sets.forEach(function (st, j) {
+      var inp = row.querySelector('input[data-k="kg"][data-i="' + j + '"]'); if (!inp) return;
+      if (inp.value !== st.kg) inp.value = st.kg;
+      inp.classList.toggle('suggested', d.suggested || isStepped(ex, d, j));
+    });
   }
   function showBanner(msg, bad) { banner.textContent = msg; banner.className = 'banner' + (bad ? ' bad' : ''); banner.hidden = false; }
   function setStatus(msg, cls) { var el = $('status'); if (!el) return; el.textContent = msg; el.className = 'status' + (cls ? ' ' + cls : ''); }
@@ -477,12 +525,15 @@
     s.ex.forEach(function (ex) {
       var d = draft.ex[ex.key]; var sg = suggest(ex);
       html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div>' +
-        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.up ? ' up' : '') + '">' + esc(sg.hint) + '</div></div><div class="ex-inputs">';
-      html += '<div class="field"><label for="kg-' + ex.key + '">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</label><input class="kg' + (d.suggested ? ' suggested' : '') + '" type="number" inputmode="decimal" step="0.5" min="0" id="kg-' + ex.key + '" data-k="kg" value="' + esc(d.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '"></div>';
-      d.sets.forEach(function (v, i) {
-        html += '<div class="field"><label for="s' + (i + 1) + '-' + ex.key + '">set ' + (i + 1) + '</label><input type="number" inputmode="numeric" min="0" max="100" id="s' + (i + 1) + '-' + ex.key + '" data-k="set" data-i="' + i + '" value="' + esc(v) + '" placeholder="reps"></div>';
+        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.up ? ' up' : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
+      html += '<span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">reps</span>';
+      d.sets.forEach(function (st, i) {
+        var n = i + 1;
+        html += '<span class="n">Set ' + n + '</span>' +
+          '<input class="kg' + (d.suggested || isStepped(ex, d, i) ? ' suggested' : '') + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
+          '<input type="number" inputmode="numeric" min="0" max="100" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="reps" aria-label="Set ' + n + ' reps">';
       });
-      if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '" title="Add a set" aria-label="Add a set"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>';
+      if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add set</button>';
       html += '</div></div>';
     });
     html += '</div><div class="field" style="align-items:stretch"><label for="notes" style="align-self:flex-start">Notes</label><textarea id="notes" placeholder="Anything worth remembering: felt heavy, form cue, slept badly…">' + esc(draft.notes || '') + '</textarea></div>';
@@ -539,7 +590,7 @@
       var s = sessionByKey(h.session);
       var lines = (h.exercises || []).map(function (e) {
         var ex = exInSession(s, e.key) || { name: e.name, load: e.load };
-        return '<div class="l">' + esc(e.name || ex.name) + '</div><div class="r">' + esc(fmtKg(ex, e.kg)) + ' · ' + esc((e.sets || []).join(' / ')) + '</div>';
+        return '<div class="l">' + esc(e.name || ex.name) + '</div><div class="r">' + esc(fmtSets(ex, e.sets)) + '</div>';
       }).join('');
       var armed = deleteArmed === h.id;
       return '<div class="entry"><div class="entry-head"><span class="chip ' + typeOf(h.session) + '">' + esc(h.sessionName || (s ? s.name : h.session)) + '</span><span class="date">' + esc(fmtDate(h.date)) + '</span></div><div class="lines">' + lines + '</div>' +
@@ -588,24 +639,30 @@
     if (t.id === 'date') { draft.date = t.value || todayISO(); saveDraft(); return; }
     if (t.id === 'notes') { draft.notes = t.value; saveDraft(); return; }
     var row = t.closest('.ex'); if (!row) return;
-    var d = draft.ex[row.getAttribute('data-ex')];
-    if (t.getAttribute('data-k') === 'kg') { d.kg = t.value; d.suggested = false; t.classList.remove('suggested'); }
-    else if (t.getAttribute('data-k') === 'set') d.sets[+t.getAttribute('data-i')] = t.value;
-    saveDraft();
+    var key = row.getAttribute('data-ex'); var ex = exInSession(PROGRAM[selected], key); var d = draft.ex[key];
+    var i = +t.getAttribute('data-i'); var k = t.getAttribute('data-k');
+    if (k === 'kg') { setKg(d, i, t.value); d.suggested = false; }
+    else if (k === 'reps') d.sets[i].reps = t.value;
+    else return;
+    applySteps(ex, d, i); syncRow(row, ex, d); saveDraft();
   });
   form.addEventListener('click', function (e) {
     var add = e.target.closest('[data-add]');
-    if (add) { var k = add.getAttribute('data-add'); draft.ex[k].sets.push(''); saveDraft(); renderToday(); $('s' + draft.ex[k].sets.length + '-' + k).focus(); return; }
+    if (add) {
+      var k = add.getAttribute('data-add'); var ex = exInSession(PROGRAM[selected], k); var d = draft.ex[k]; var prev = d.sets[d.sets.length - 1];
+      d.sets.push({ kg: prev.kg, reps: '' }); applySteps(ex, d, d.sets.length - 2);
+      saveDraft(); renderToday(); $('r' + d.sets.length + '-' + k).focus(); return;
+    }
     if (e.target.id === 'clear') { draft = null; saveDraft(); renderToday(); }
   });
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var s = PROGRAM[selected]; var exercises = [];
     s.ex.forEach(function (ex) {
-      var d = draft.ex[ex.key]; var sets = d.sets.map(num).filter(function (v) { return v != null; });
+      var d = draft.ex[ex.key]; var sets = [];
+      d.sets.forEach(function (st) { var reps = num(st.reps); if (reps == null) return; var kg = num(st.kg); if (ex.load === 'bw' && kg == null) kg = 0; sets.push({ kg: kg, reps: reps }); });
       if (!sets.length) return;
-      var kg = num(d.kg); if (ex.load === 'bw' && kg == null) kg = 0;
-      exercises.push({ key: ex.key, name: ex.name, load: ex.load || 'db', kg: kg, sets: sets });
+      exercises.push({ key: ex.key, name: ex.name, load: ex.load || 'db', sets: sets });
     });
     if (!exercises.length) { setStatus('Enter reps for at least one exercise.', 'bad'); return; }
     history.unshift({ id: uid(), date: draft.date || todayISO(), session: s.key, sessionName: s.name, exercises: exercises, notes: (draft.notes || '').trim(), finishedAt: new Date().toISOString() });
@@ -634,8 +691,12 @@
   }
   $('export-json').addEventListener('click', function () { download('ppl-log-' + todayISO() + '.json', JSON.stringify({ exported: new Date().toISOString(), sessions: history }, null, 2), 'application/json'); });
   $('export-csv').addEventListener('click', function () {
-    var rows = [['date', 'session', 'exercise', 'kg', 'set1', 'set2', 'set3', 'set4', 'notes']];
-    history.slice().reverse().forEach(function (h) { (h.exercises || []).forEach(function (e) { rows.push([h.date, h.sessionName, e.name, e.kg == null ? '' : e.kg, e.sets[0] == null ? '' : e.sets[0], e.sets[1] == null ? '' : e.sets[1], e.sets[2] == null ? '' : e.sets[2], e.sets[3] == null ? '' : e.sets[3], h.notes || '']); }); });
+    var rows = [['date', 'session', 'exercise', 'set1_kg', 'set1_reps', 'set2_kg', 'set2_reps', 'set3_kg', 'set3_reps', 'set4_kg', 'set4_reps', 'notes']];
+    history.slice().reverse().forEach(function (h) { (h.exercises || []).forEach(function (e) {
+      var row = [h.date, h.sessionName, e.name];
+      for (var i = 0; i < 4; i++) { var st = e.sets[i]; row.push(st && st.kg != null ? st.kg : '', st && st.reps != null ? st.reps : ''); }
+      row.push(h.notes || ''); rows.push(row);
+    }); });
     download('ppl-log-' + todayISO() + '.csv', rows.map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\n'), 'text/csv');
   });
   $('import-file').addEventListener('change', function () {
@@ -646,7 +707,7 @@
         var data = JSON.parse(r.result); var list = Array.isArray(data) ? data : data.sessions;
         if (!Array.isArray(list)) throw new Error('no sessions array');
         var seen = {}; history.forEach(function (h) { seen[h.id] = true; }); var added = 0;
-        list.forEach(function (h) { if (h && h.session && Array.isArray(h.exercises) && !seen[h.id]) { if (!h.id) h.id = uid(); history.push(h); seen[h.id] = true; added++; } });
+        list.forEach(function (h) { if (h && h.session && Array.isArray(h.exercises) && !seen[h.id]) { if (!h.id) h.id = uid(); normalizeSession(h); history.push(h); seen[h.id] = true; added++; } });
         persistHistory(); if (autoSelected && !draftTouched()) { selected = nextIndex(); draft = null; saveDraft(); }
         renderAll();
         showBanner('Imported ' + added + ' session' + (added === 1 ? '' : 's') + '.');
