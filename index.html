@@ -119,14 +119,23 @@
   .ex-hint { font-size: 13px; color: var(--muted); }
   .ex-hint.up { color: var(--accent-ink); font-weight: 600; }
   .ex-hint.down { color: var(--warn-ink); font-weight: 600; }
-  .sets { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; align-items: center; }
+  .sets { display: flex; flex-direction: column; gap: 8px; }
+  .sets .hdr, .set-body { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; }
+  /* Swipe-to-delete: the body slides left over a red "Delete" layer. Padding/negative margin leave room for focus rings inside the clip. */
+  .set { position: relative; overflow: hidden; border-radius: 14px; padding: 4px; margin: -4px; touch-action: pan-y; }
+  .set-del { position: absolute; inset: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 16px; border-radius: 12px; background: var(--bad-soft); color: var(--bad-ink); font-size: 13px; font-weight: 800; letter-spacing: 0.03em; user-select: none; -webkit-user-select: none; }
+  .set.armed .set-del { background: var(--bad-ink); color: #fff; }
+  .set-body { position: relative; background: var(--surface); will-change: transform; }
+  .set.settling .set-body { transition: transform .18s ease; }
+  .set.leaving .set-body { transition: transform .16s ease-in; }
+  .sets .n { user-select: none; -webkit-user-select: none; }
   .sets .h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: center; }
   .sets .n { font-size: 12px; font-weight: 700; color: var(--muted); }
   .sets input { width: 100%; min-width: 0; font: inherit; font-size: 17px; font-weight: 700; text-align: center; padding: 10px 4px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; }
   .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .sets input.suggested { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
   .sets input.suggested.down { border-color: var(--warn-ink); background: var(--warn-soft); color: var(--warn-ink); }
-  .addset { grid-column: 1 / -1; justify-self: stretch; justify-content: center; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .addset { align-self: stretch; justify-content: center; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .addset svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
   .field { display: flex; flex-direction: column; gap: 3px; }
   .field label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
@@ -203,8 +212,9 @@
   @media (min-width: 560px) {
     .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .ex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; }
-    .sets { justify-self: end; grid-template-columns: 48px 84px 72px; gap: 6px 8px; }
-    .addset { justify-self: start; }
+    .sets { justify-self: end; gap: 6px; }
+    .sets .hdr, .set-body { grid-template-columns: 48px 84px 72px; gap: 8px; }
+    .addset { align-self: flex-start; }
     .rules { grid-template-columns: 1fr 1fr; }
     .facts { grid-template-columns: repeat(4, 1fr); }
     h1 { font-size: 36px; }
@@ -327,6 +337,7 @@
   'use strict';
 
   var STEP = 2; // kg per dumbbell when set 1 hits the top of its range
+  var SWIPE_DELETE = 88; // px a set row must be swiped left to delete it
   var TARGET_PER_WEEK = 6;
   var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab';
 
@@ -548,12 +559,12 @@
       var d = draft.ex[ex.key]; var sg = suggest(ex);
       html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div>' +
         '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.dir ? ' ' + sg.dir : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
-      html += '<span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">reps</span>';
+      html += '<div class="hdr"><span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">reps</span></div>';
       d.sets.forEach(function (st, i) {
         var n = i + 1;
-        html += '<span class="n">Set ' + n + '</span>' +
+        html += '<div class="set" data-i="' + i + '"><div class="set-del" aria-hidden="true">Delete</div><div class="set-body"><span class="n">Set ' + n + '</span>' +
           '<input class="' + kgClass(d.suggested || stepDir(ex, d, i)) + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
-          '<input type="number" inputmode="numeric" min="0" max="100" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="reps" aria-label="Set ' + n + ' reps">';
+          '<input type="number" inputmode="numeric" min="0" max="100" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="reps" aria-label="Set ' + n + ' reps"></div></div>';
       });
       if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add set</button>';
       html += '</div></div>';
@@ -668,6 +679,44 @@
     else return;
     applySteps(ex, d, i); syncRow(row, ex, d); saveDraft();
   });
+  // Swipe a set row left to delete it. Vertical movement is left to the page (touch-action: pan-y);
+  // a mouse drag only counts when it starts outside the inputs, so text selection keeps working.
+  var swipe = null;
+  function removeSet(row) {
+    var exRow = row.closest('.ex'); var key = exRow.getAttribute('data-ex'); var ex = exInSession(PROGRAM[selected], key); var d = draft.ex[key]; var i = +row.getAttribute('data-i');
+    d.sets.splice(i, 1); applySteps(ex, d, Math.max(0, i - 1)); saveDraft();
+    row.classList.add('leaving'); row.querySelector('.set-body').style.transform = 'translateX(-110%)';
+    setTimeout(renderToday, 160);
+  }
+  form.addEventListener('pointerdown', function (e) {
+    var row = e.target.closest('.set'); if (!row || swipe) return;
+    if (e.pointerType === 'mouse' && (e.button !== 0 || e.target.tagName === 'INPUT')) return;
+    swipe = { row: row, body: row.querySelector('.set-body'), id: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, active: false };
+  });
+  form.addEventListener('pointermove', function (e) {
+    if (!swipe || e.pointerId !== swipe.id) return;
+    var dx = e.clientX - swipe.x0, dy = e.clientY - swipe.y0;
+    if (!swipe.active) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx) || dx > 0) { swipe = null; return; }
+      swipe.active = true; swipe.row.classList.remove('settling');
+      try { swipe.row.setPointerCapture(e.pointerId); } catch (x) {}
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') document.activeElement.blur();
+    }
+    e.preventDefault();
+    var canDelete = draft.ex[swipe.row.closest('.ex').getAttribute('data-ex')].sets.length > 1;
+    swipe.dx = Math.min(0, canDelete ? dx : dx / 4);
+    swipe.body.style.transform = 'translateX(' + swipe.dx + 'px)';
+    swipe.row.classList.toggle('armed', canDelete && -swipe.dx > SWIPE_DELETE);
+  });
+  function endSwipe(e) {
+    if (!swipe || e.pointerId !== swipe.id) return; var sw = swipe; swipe = null;
+    if (!sw.active) return;
+    if (sw.row.classList.contains('armed')) { removeSet(sw.row); return; }
+    sw.row.classList.add('settling'); sw.body.style.transform = '';
+  }
+  form.addEventListener('pointerup', endSwipe);
+  form.addEventListener('pointercancel', endSwipe);
   form.addEventListener('click', function (e) {
     var add = e.target.closest('[data-add]');
     if (add) {
