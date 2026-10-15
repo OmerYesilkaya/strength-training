@@ -119,14 +119,14 @@
   .ex-hint { font-size: 13px; color: var(--muted); }
   .ex-hint.up { color: var(--accent-ink); font-weight: 600; }
   .ex-hint.down { color: var(--warn-ink); font-weight: 600; }
-  .sets { display: grid; grid-template-columns: 48px 84px 72px; gap: 6px 8px; align-items: center; }
+  .sets { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; align-items: center; }
   .sets .h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: center; }
   .sets .n { font-size: 12px; font-weight: 700; color: var(--muted); }
   .sets input { width: 100%; min-width: 0; font: inherit; font-size: 17px; font-weight: 700; text-align: center; padding: 10px 4px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; }
   .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .sets input.suggested { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
   .sets input.suggested.down { border-color: var(--warn-ink); background: var(--warn-soft); color: var(--warn-ink); }
-  .addset { grid-column: 1 / -1; justify-self: start; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .addset { grid-column: 1 / -1; justify-self: stretch; justify-content: center; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .addset svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
   .field { display: flex; flex-direction: column; gap: 3px; }
   .field label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
@@ -203,7 +203,8 @@
   @media (min-width: 560px) {
     .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .ex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; }
-    .sets { justify-self: end; }
+    .sets { justify-self: end; grid-template-columns: 48px 84px 72px; gap: 6px 8px; }
+    .addset { justify-self: start; }
     .rules { grid-template-columns: 1fr 1fr; }
     .facts { grid-template-columns: repeat(4, 1fr); }
     h1 { font-size: 36px; }
