@@ -118,12 +118,14 @@
   .ex-target { font-size: 12.5px; color: var(--muted); font-weight: 600; }
   .ex-hint { font-size: 13px; color: var(--muted); }
   .ex-hint.up { color: var(--accent-ink); font-weight: 600; }
+  .ex-hint.down { color: var(--warn-ink); font-weight: 600; }
   .sets { display: grid; grid-template-columns: 48px 84px 72px; gap: 6px 8px; align-items: center; }
   .sets .h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: center; }
   .sets .n { font-size: 12px; font-weight: 700; color: var(--muted); }
   .sets input { width: 100%; min-width: 0; font: inherit; font-size: 17px; font-weight: 700; text-align: center; padding: 10px 4px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; }
   .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .sets input.suggested { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  .sets input.suggested.down { border-color: var(--warn-ink); background: var(--warn-soft); color: var(--warn-ink); }
   .addset { grid-column: 1 / -1; justify-self: start; appearance: none; border: 2px dashed var(--line); background: transparent; color: var(--muted); border-radius: 12px; min-height: 36px; padding: 0 12px 0 9px; margin: 0; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .addset svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
   .field { display: flex; flex-direction: column; gap: 3px; }
@@ -281,7 +283,7 @@
 
     <section>
       <h2>Progression</h2>
-      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. Each set also has its own weight: when a set reaches the top of the range, the log pre-fills the next set 2&nbsp;kg heavier, so you can go up within the same session.</p>
+      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. If set 1 lands under the bottom of the range two sessions in a row at the same weight, the log steps back down 2&nbsp;kg; a single miss only repeats the weight, because one bad day is not a trend. Each set also has its own weight: when a set reaches the top of the range, the next set is pre-filled 2&nbsp;kg heavier, and when a set misses the bottom, the next set is pre-filled 2&nbsp;kg lighter.</p>
       <div class="example"><b>Example.</b> Flat press, 2 × 6–10. You get 32 kg × 10 and × 8. Set 1 hit 10, so next time use 34&nbsp;kg. You get 34 × 7 and × 6. Keep 34 until set 1 reaches 10 again.</div>
     </section>
 
@@ -374,7 +376,7 @@
   var history = [];        // newest first
   var selected = 0;        // index into PROGRAM
   var autoSelected = true; // selected follows "up next" until the user picks
-  var draft = null;        // { v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested } }, notes }
+  var draft = null;        // { v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested: 'up' | 'down' | false } }, notes }
   var deleteArmed = null;
   var calMonth = startOfMonth(new Date());
 
@@ -435,25 +437,34 @@
     var i = PROGRAM.findIndex(function (s) { return s.key === history[0].session; });
     return i < 0 ? 0 : (i + 1) % PROGRAM.length;
   }
-  function lastFor(exKey) {
-    for (var i = 0; i < history.length; i++) {
+  function recentFor(exKey, n) {
+    var out = [];
+    for (var i = 0; i < history.length && out.length < n; i++) {
       var exs = history[i].exercises || [];
-      for (var j = 0; j < exs.length; j++) if (exs[j].key === exKey && exs[j].sets && exs[j].sets.length) return { sets: exs[j].sets, date: history[i].date };
+      for (var j = 0; j < exs.length; j++) if (exs[j].key === exKey && exs[j].sets && exs[j].sets.length) { out.push({ sets: exs[j].sets, date: history[i].date }); break; }
     }
-    return null;
+    return out;
   }
   function suggest(ex) {
-    var last = lastFor(ex.key);
-    if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' reps.', up: false };
-    var s1 = last.sets[0]; var lastKg = s1.kg;
-    if (lastKg != null && s1.reps != null && s1.reps >= ex.reps[1]) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1.reps + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', up: true };
-    return { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), up: false };
+    var recent = recentFor(ex.key, 2); var last = recent[0];
+    if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' reps.', dir: false };
+    var s1 = last.sets[0]; var lastKg = s1.kg; var lo = ex.reps[0], hi = ex.reps[1];
+    var keep = { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), dir: false };
+    if (lastKg == null || s1.reps == null) return keep;
+    if (s1.reps >= hi) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1.reps + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', dir: 'up' };
+    if (s1.reps < lo) {
+      var prev = recent[1]; var p1 = prev && prev.sets[0];
+      var missedTwice = p1 && p1.kg === lastKg && p1.reps != null && p1.reps < lo;
+      if (missedTwice && lastKg - STEP >= 0) return { kg: lastKg - STEP, hint: 'Set 1 under ' + lo + ' twice at ' + fmtKg(ex, lastKg) + ' (' + p1.reps + ', then ' + s1.reps + '). Down to ' + fmtKg(ex, lastKg - STEP) + '.', dir: 'down' };
+      keep.hint += missedTwice ? '. Set 1 under ' + lo + ' twice at bodyweight. Use an easier variation or slower reps.' : '. Set 1 under ' + lo + ', try once more; a second miss steps down.';
+    }
+    return keep;
   }
   function ensureDraft() {
     var s = PROGRAM[selected];
     if (!draft || draft.v !== 2 || draft.session !== s.key) draft = { v: 2, session: s.key, date: todayISO(), ex: {}, notes: '' };
     s.ex.forEach(function (ex) {
-      if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '' }, { kg: kg, reps: '' }], suggested: sg.up }; }
+      if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '' }, { kg: kg, reps: '' }], suggested: sg.dir }; }
     });
   }
   function draftTouched() {
@@ -466,8 +477,19 @@
   // or that kg plus one step once the previous set reaches the top of the rep range. Mirroring sets follow
   // edits automatically; a set the user typed a different kg into is left alone.
   function stepOf(kg) { var n = num(kg); return n == null ? null : String(n + STEP); }
-  function mirrors(d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg)); }
-  function isStepped(ex, d, j) { if (j === 0) return false; var prev = d.sets[j - 1]; return d.sets[j].kg !== '' && d.sets[j].kg === stepOf(prev.kg) && num(prev.reps) != null && num(prev.reps) >= ex.reps[1]; }
+  function stepDownOf(kg) { var n = num(kg); return n == null ? null : String(Math.max(0, n - STEP)); }
+  function mirrors(d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg) || st.kg === stepDownOf(prev.kg)); }
+  // What set j's kg should be, given set j-1's reps: one step up at the top of the range, one step down under the bottom.
+  function wantedKg(ex, d, j) {
+    var prev = d.sets[j - 1]; var reps = num(prev.reps); if (num(prev.kg) == null || reps == null) return prev.kg;
+    return reps >= ex.reps[1] ? stepOf(prev.kg) : (reps < ex.reps[0] ? stepDownOf(prev.kg) : prev.kg);
+  }
+  // 'up' | 'down' | null: whether set j currently sits on an automatic step from set j-1.
+  function stepDir(ex, d, j) {
+    if (j === 0 || d.sets[j].kg === '') return null; var prev = d.sets[j - 1]; var want = wantedKg(ex, d, j);
+    if (want === prev.kg || d.sets[j].kg !== want) return null;
+    return num(prev.reps) >= ex.reps[1] ? 'up' : 'down';
+  }
   function setKg(d, j, value) {
     var prevOld = d.sets[j].kg; if (prevOld === value) return;
     d.sets[j].kg = value;
@@ -477,16 +499,15 @@
     }
   }
   function applySteps(ex, d, from) {
-    for (var j = from; j < d.sets.length - 1; j++) {
-      var cur = d.sets[j]; if (!mirrors(d, j + 1) || num(cur.kg) == null) continue;
-      setKg(d, j + 1, num(cur.reps) != null && num(cur.reps) >= ex.reps[1] ? stepOf(cur.kg) : cur.kg);
-    }
+    for (var j = from; j < d.sets.length - 1; j++) if (mirrors(d, j + 1) && num(d.sets[j].kg) != null) setKg(d, j + 1, wantedKg(ex, d, j + 1));
   }
+  function kgClass(dir) { return 'kg' + (dir ? ' suggested' : '') + (dir === 'down' ? ' down' : ''); }
   function syncRow(row, ex, d) {
     d.sets.forEach(function (st, j) {
       var inp = row.querySelector('input[data-k="kg"][data-i="' + j + '"]'); if (!inp) return;
       if (inp.value !== st.kg) inp.value = st.kg;
-      inp.classList.toggle('suggested', d.suggested || isStepped(ex, d, j));
+      var dir = d.suggested || stepDir(ex, d, j);
+      inp.classList.toggle('suggested', !!dir); inp.classList.toggle('down', dir === 'down');
     });
   }
   function showBanner(msg, bad) { banner.textContent = msg; banner.className = 'banner' + (bad ? ' bad' : ''); banner.hidden = false; }
@@ -525,12 +546,12 @@
     s.ex.forEach(function (ex) {
       var d = draft.ex[ex.key]; var sg = suggest(ex);
       html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div>' +
-        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.up ? ' up' : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
+        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.dir ? ' ' + sg.dir : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
       html += '<span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">reps</span>';
       d.sets.forEach(function (st, i) {
         var n = i + 1;
         html += '<span class="n">Set ' + n + '</span>' +
-          '<input class="kg' + (d.suggested || isStepped(ex, d, i) ? ' suggested' : '') + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
+          '<input class="' + kgClass(d.suggested || stepDir(ex, d, i)) + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
           '<input type="number" inputmode="numeric" min="0" max="100" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="reps" aria-label="Set ' + n + ' reps">';
       });
       if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add set</button>';
