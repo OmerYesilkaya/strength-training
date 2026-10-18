@@ -342,6 +342,7 @@
   var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab';
 
   // The program. Keep each exercise's `key` stable when renaming or changing reps, so its history keeps linking.
+  // `unit: 's'` marks a timed exercise: the reps field holds seconds and the same progression rule applies to them.
   var PROGRAM = [
     { key: 'pushA', type: 'push', name: 'Push A', focus: 'Chest', ex: [
       { key: 'flat_press', name: 'Flat dumbbell press', reps: [6, 10], warm: true },
@@ -361,7 +362,7 @@
       { key: 'bss', name: 'Bulgarian split squat', reps: [8, 12], warm: true, per: 'leg', note: 'Rear foot on the bench, dumbbells in hands' },
       { key: 'rdl', name: 'Romanian deadlift', reps: [8, 12], note: 'Three-second lowering' },
       { key: 'goblet', name: 'Goblet or front squat', reps: [10, 15], note: 'Front squat: dumbbells on the shoulders' },
-      { key: 'calf', name: 'Single-leg calf raise', reps: [10, 15], per: 'leg', note: 'Hold one dumbbell. Full pause at the bottom stretch' }
+      { key: 'carry', name: "Farmer's carry", reps: [30, 45], unit: 's', note: 'One dumbbell per hand, walk until the grip goes. Count seconds, not reps' }
     ]},
     { key: 'pushB', type: 'push', name: 'Push B', focus: 'Shoulders', ex: [
       { key: 'ohp', name: 'Seated overhead press', reps: [6, 10], warm: true },
@@ -381,7 +382,7 @@
       { key: 'sl_rdl', name: 'Single-leg Romanian deadlift', reps: [8, 12], warm: true, per: 'leg', note: 'One dumbbell in the opposite hand, or both' },
       { key: 'lunge', name: 'Reverse lunge or step-up', reps: [8, 12], per: 'leg' },
       { key: 'hip_thrust', name: 'Hip thrust', reps: [10, 15], note: 'Upper back on the bench, dumbbell across the hips, pause at the top' },
-      { key: 'calf', name: 'Single-leg calf raise', reps: [10, 15], per: 'leg' }
+      { key: 'carry', name: "Farmer's carry", reps: [30, 45], unit: 's' }
     ]}
   ];
 
@@ -431,11 +432,14 @@
 
   // ---------- helpers ----------
   function fmtKg(ex, kg) { if (kg == null || kg === '') return ex.load === 'bw' ? 'bodyweight' : '—'; if (ex.load === 'bw') return kg === 0 ? 'bodyweight' : '+' + kg + ' kg'; return kg + ' kg'; }
+  function unitOf(ex) { return ex.unit === 's' ? 's' : 'reps'; }
+  function fmtReps(ex, r) { return ex.unit === 's' ? r + ' s' : String(r); }
+  function targetOf(ex) { return '2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.unit === 's' ? ' s' : '') + (ex.per ? ' / ' + ex.per : ''); }
   function fmtSets(ex, sets) {
     sets = sets || []; if (!sets.length) return '—';
     var same = sets.every(function (st) { return st.kg === sets[0].kg; });
-    if (same) return fmtKg(ex, sets[0].kg) + ' · ' + sets.map(function (st) { return st.reps; }).join(' / ');
-    return sets.map(function (st) { return fmtKg(ex, st.kg) + ' × ' + st.reps; }).join(' · ');
+    if (same) return fmtKg(ex, sets[0].kg) + ' · ' + sets.map(function (st) { return st.reps; }).join(' / ') + (ex.unit === 's' ? ' s' : '');
+    return sets.map(function (st) { return fmtKg(ex, st.kg) + ' × ' + fmtReps(ex, st.reps); }).join(' · ');
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function num(v) { if (v === '' || v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
@@ -459,11 +463,11 @@
   }
   function suggest(ex) {
     var recent = recentFor(ex.key, 2); var last = recent[0];
-    if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' reps.', dir: false };
+    if (!last) return { kg: ex.load === 'bw' ? 0 : '', hint: 'First time. Pick a weight that gets you ' + ex.reps[0] + '–' + ex.reps[1] + ' ' + unitOf(ex) + '.', dir: false };
     var s1 = last.sets[0]; var lastKg = s1.kg; var lo = ex.reps[0], hi = ex.reps[1];
     var keep = { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), dir: false };
     if (lastKg == null || s1.reps == null) return keep;
-    if (s1.reps >= hi) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + s1.reps + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', dir: 'up' };
+    if (s1.reps >= hi) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', dir: 'up' };
     if (s1.reps < lo) {
       var prev = recent[1]; var p1 = prev && prev.sets[0];
       var missedTwice = p1 && p1.kg === lastKg && p1.reps != null && p1.reps < lo;
@@ -558,13 +562,13 @@
     s.ex.forEach(function (ex) {
       var d = draft.ex[ex.key]; var sg = suggest(ex);
       html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div>' +
-        '<div class="ex-target">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div><div class="ex-hint' + (sg.dir ? ' ' + sg.dir : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
-      html += '<div class="hdr"><span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">reps</span></div>';
+        '<div class="ex-target">' + targetOf(ex) + '</div><div class="ex-hint' + (sg.dir ? ' ' + sg.dir : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
+      html += '<div class="hdr"><span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">' + unitOf(ex) + '</span></div>';
       d.sets.forEach(function (st, i) {
         var n = i + 1;
         html += '<div class="set" data-i="' + i + '"><div class="set-del" aria-hidden="true">Delete</div><div class="set-body"><span class="n">Set ' + n + '</span>' +
           '<input class="' + kgClass(d.suggested || stepDir(ex, d, i)) + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
-          '<input type="number" inputmode="numeric" min="0" max="100" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="reps" aria-label="Set ' + n + ' reps"></div></div>';
+          '<input type="number" inputmode="numeric" min="0" max="' + (ex.unit === 's' ? 600 : 100) + '" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="' + unitOf(ex) + '" aria-label="Set ' + n + ' ' + unitOf(ex) + '"></div></div>';
       });
       if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add set</button>';
       html += '</div></div>';
@@ -639,7 +643,7 @@
     $('program-sessions').innerHTML = PROGRAM.map(function (s, i) {
       return '<div class="psession"><div class="psession-head"><div><span class="eyebrow">Day ' + (i + 1) + ' · ' + esc(s.focus) + '</span><h3>' + esc(s.name) + '</h3></div><span class="chip ' + s.type + '">' + esc(s.type) + '</span></div><div>' +
         s.ex.map(function (ex) {
-          return '<div class="prow"><div class="n">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div><div class="sr">2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.per ? ' / ' + ex.per : '') + '</div>' + (ex.note ? '<div class="note">' + esc(ex.note) + '</div>' : '') + '</div>';
+          return '<div class="prow"><div class="n">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div><div class="sr">' + targetOf(ex) + '</div>' + (ex.note ? '<div class="note">' + esc(ex.note) + '</div>' : '') + '</div>';
         }).join('') + '</div></div>';
     }).join('');
   }
