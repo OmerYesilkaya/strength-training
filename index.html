@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
 <style>
-  /* Layout: phone-first, one column of soft white cards on a cool grey ground, three tabs in a floating pill bar.
+  /* Layout: phone-first, one column of soft white cards on a cool grey ground, four tabs in a floating pill bar.
      Palette: indigo accent; push = indigo, pull = coral, legs = green. */
   :root {
     --bg: #eef0f6; --surface: #ffffff; --surface-2: #f4f5f9; --ink: #1d2033; --muted: #7b819a; --line: #e4e7f0;
@@ -75,9 +75,9 @@
   /* Tabs */
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: none;
     padding: 0 max(16px, env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
-  nav.tabs .inner { pointer-events: auto; max-width: 420px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(29, 32, 51, 0.14); }
-  nav.tabs button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; padding: 10px 6px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
-  nav.tabs button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  nav.tabs .inner { pointer-events: auto; max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface); border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(29, 32, 51, 0.14); }
+  nav.tabs button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; padding: 10px 2px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; min-width: 0; }
+  nav.tabs button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   nav.tabs button[aria-selected="true"] { color: #fff; background: var(--accent); }
   :is(.pick, .btn, input, textarea, nav.tabs button, .navbtn):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -209,8 +209,47 @@
   .callout { background: var(--pull-soft); color: var(--ink); border-radius: 18px; padding: 12px 14px; font-size: 14.5px; }
   .example { background: var(--lav-soft); border-radius: 18px; padding: 12px 14px; font-size: 14.5px; }
 
+  /* Body tab: morning check-in form, trend chart, intake and body-fat stats, profile */
+  .small { font-size: 12.5px; }
+  .bgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .fin, select.fin { width: 100%; min-width: 0; font: inherit; font-size: 17px; font-weight: 700; padding: 10px 12px; border: 2px solid transparent; border-radius: 12px; background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; -webkit-appearance: none; appearance: none; min-height: 46px; }
+  .fin::-webkit-outer-spin-button, .fin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .fin::placeholder { color: var(--muted); opacity: .7; font-weight: 600; }
+  .fin.filled { border-color: var(--accent-soft); }
+  .field .unit { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); }
+  .side { text-align: right; display: flex; flex-direction: column; }
+  .side b { font-size: 18px; font-weight: 800; line-height: 1.15; }
+  .side span { font-size: 12.5px; color: var(--muted); }
+  .side.losing b { color: var(--legs); } .side.gaining b { color: var(--warn-ink); }
+  .verdict { border-radius: 16px; padding: 12px 14px; font-size: 14.5px; background: var(--surface-2); color: var(--ink); }
+  .verdict.ok { background: var(--legs-soft); } .verdict.slow, .verdict.fast { background: var(--warn-soft); color: var(--warn-ink); }
+  .verdict b { font-weight: 800; }
+  .chart { width: 100%; height: auto; aspect-ratio: 360 / 170; display: block; touch-action: pan-y; }
+  .chart text { font-family: var(--font); font-size: 9.5px; font-weight: 700; fill: var(--muted); }
+  .chart-read { font-size: 13px; color: var(--muted); font-weight: 600; min-height: 20px; }
+  .chart-read b { color: var(--ink); }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .stat { background: var(--surface-2); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .stat b { font-size: 20px; font-weight: 800; line-height: 1.15; }
+  .stat b small { font-size: 13px; font-weight: 700; color: var(--muted); }
+  .stat span { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .brows { display: flex; flex-direction: column; }
+  .brow { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; align-items: center; cursor: pointer; }
+  .brow.hdr { border-top: 0; padding: 0 0 2px; cursor: default; }
+  .brow.hdr span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .brow span { text-align: right; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brow span:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+  .brow.sel span:first-child { color: var(--accent-ink); }
+  details.profile summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  details.profile summary::-webkit-details-marker { display: none; }
+  details.profile summary .chev { width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; transition: transform .15s ease; }
+  details.profile[open] summary .chev { transform: rotate(180deg); }
+  details.profile .pbody { display: flex; flex-direction: column; gap: 12px; }
+
   @media (min-width: 560px) {
     .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .bgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .ex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; }
     .sets { justify-self: end; gap: 6px; }
     .sets .hdr, .set-body { grid-template-columns: 48px 84px 72px; gap: 8px; }
@@ -239,6 +278,51 @@
     </div>
     <div class="picker" id="picker" role="group" aria-label="Choose session"></div>
     <form id="today" class="card" autocomplete="off"></form>
+  </div>
+
+  <!-- Body -->
+  <div class="view" id="view-body" hidden>
+    <form class="card" id="body-form" autocomplete="off">
+      <div class="card-head"><div><span class="eyebrow">Morning check-in</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
+      <div class="bgrid">
+        <div class="field"><label for="b-kg">Weight <span class="unit">kg</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="20" max="300" id="b-kg" data-f="kg" placeholder="—"></div>
+        <div class="field"><label for="b-kcal">Calories <span class="unit">kcal</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="0" max="20000" id="b-kcal" data-f="kcal" placeholder="—"></div>
+        <div class="field"><label for="b-protein">Protein <span class="unit">g</span></label><input class="fin" type="number" inputmode="numeric" min="0" max="1000" id="b-protein" data-f="protein" placeholder="—"></div>
+        <div class="field"><label for="b-steps">Steps</label><input class="fin" type="number" inputmode="numeric" step="100" min="0" max="100000" id="b-steps" data-f="steps" placeholder="—"></div>
+        <div class="field"><label for="b-waist">Waist <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="40" max="200" id="b-waist" data-f="waist" placeholder="—"></div>
+        <div class="field"><label for="b-neck">Neck <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="20" max="80" id="b-neck" data-f="neck" placeholder="—"></div>
+        <div class="field" id="b-hip-field" hidden><label for="b-hip">Hips <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="50" max="200" id="b-hip" data-f="hip" placeholder="—"></div>
+      </div>
+      <div class="actions"><button type="button" class="btn ghost" id="b-copy" hidden></button><span class="status" id="b-status">Saves as you type. Skipped days are fine.</span></div>
+      <p class="muted small">Weigh after the bathroom and before food. Waist at the navel and neck just below the Adam's apple, once a week, tape snug and relaxed.</p>
+    </form>
+    <div class="card" id="b-trend"></div>
+    <div class="card" id="b-intake"></div>
+    <div class="card" id="b-fat"></div>
+    <div class="card" id="b-recent"></div>
+    <details class="card profile" id="b-profile">
+      <summary><div><h2>Profile</h2><p class="muted small" id="b-profile-sum">Set up</p></div><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="pbody">
+        <div class="bgrid">
+          <div class="field"><label for="p-height">Height <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="100" max="250" id="p-height" data-p="height" placeholder="172"></div>
+          <div class="field"><label for="p-birthYear">Birth year</label><input class="fin" type="number" inputmode="numeric" min="1900" max="2100" id="p-birthYear" data-p="birthYear" placeholder="1998"></div>
+          <div class="field"><label for="p-sex">Sex</label><select class="fin" id="p-sex" data-p="sex"><option value="m">Male</option><option value="f">Female</option></select></div>
+          <div class="field"><label for="p-goalBf">Goal body fat <span class="unit">%</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="3" max="60" id="p-goalBf" data-p="goalBf" placeholder="17"></div>
+          <div class="field"><label for="p-rate">Target loss <span class="unit">% of weight a week</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="0.1" max="1.5" id="p-rate" data-p="rate" placeholder="0.6"></div>
+          <div class="field"><label for="p-maintenance">Maintenance <span class="unit">kcal, optional</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="800" max="8000" id="p-maintenance" data-p="maintenance" placeholder="—"></div>
+        </div>
+        <p class="muted small">Maintenance is only a starting guess. Leave it empty to use an estimate from your height, weight, and age; once you have two weeks of weigh-ins and calories, the app measures it from your own data and ignores this.</p>
+      </div>
+    </details>
+    <section>
+      <h2>How the fat comes off</h2>
+      <div class="rules">
+        <div class="rule"><b>Weigh every morning</b><p>One reading means nothing, it swings a kilo on water and salt. The trend line is the truth, and it needs about two weeks of mornings before it says anything.</p></div>
+        <div class="rule"><b>Lose about half a percent a week</b><p>Roughly 0.4 kg at your weight. Faster than 0.8 % costs muscle you train six days a week to keep, and the set 1 numbers will show it.</p></div>
+        <div class="rule"><b>Calories in your own units</b><p>One number a day. Guess dinners you did not cook in round hundreds, and guess the same way every time. The app measures your maintenance from the trend, so a consistent guess cancels out. Skipped days are fine, the trend still steers.</p></div>
+        <div class="rule"><b>Protein and steps</b><p>About 1.8 g of protein per kilo a day keeps muscle in a deficit. Walking is the cheapest extra burn there is: 7 000 steps is the floor to aim for.</p></div>
+      </div>
+    </section>
   </div>
 
   <!-- History -->
@@ -327,6 +411,7 @@
 <nav class="tabs" aria-label="Sections">
   <div class="inner">
     <button type="button" data-tab="log" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Log</button>
+    <button type="button" data-tab="body" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 13h4l3-8 4 16 3-8h4"/></svg>Body</button>
     <button type="button" data-tab="history" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>History</button>
     <button type="button" data-tab="program" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M18 5v14"/><path d="M3 8v8"/><path d="M21 8v8"/><path d="M6 12h12"/></svg>Program</button>
   </div>
@@ -339,7 +424,12 @@
   var STEP = 2; // kg per dumbbell when set 1 hits the top of its range
   var SWIPE_DELETE = 88; // px a set row must be swiped left to delete it
   var TARGET_PER_WEEK = 6;
-  var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab';
+  var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab', BODY_KEY = 'ppl.body';
+  var KCAL_PER_KG = 7700;   // energy in a kilo of body fat, used to turn a weight trend into calories
+  var TREND_ALPHA = 0.2;    // exponential smoothing per day of scale weight
+  var RATE_SPAN = 14;       // days between the two trend points that give the weekly rate
+  var RATE_BAND = 0.25;     // %/week either side of the target that still counts as on target
+  var PROTEIN_PER_KG = 1.8, STEP_TARGET = 7000;
 
   // The program. Keep each exercise's `key` stable when renaming or changing reps, so its history keeps linking.
   // `unit: 's'` marks a timed exercise: the reps field holds seconds and the same progression rule applies to them.
@@ -392,6 +482,10 @@
   var draft = null;        // { v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested: 'up' | 'down' | false } }, notes }
   var deleteArmed = null;
   var calMonth = startOfMonth(new Date());
+  // Body data: { v: 1, profile: { height, birthYear, sex, goalBf, rate, maintenance }, days: { 'YYYY-MM-DD': { kg, kcal, protein, steps, waist, neck, hip } } }
+  var body = { v: 1, profile: {}, days: {} };
+  var bodyDate = todayISO();   // the day the check-in form edits
+  var chartPts = [];           // plotted trend points, for the tap readout
 
   var $ = function (id) { return document.getElementById(id); };
   var picker = $('picker'), form = $('today'), hist = $('hist'), banner = $('banner'), histCount = $('hist-count');
@@ -417,6 +511,22 @@
   function persistHistory() { sortHistory(); if (!writeJSON(STORE_KEY, history)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
   function sortHistory() { history.sort(function (a, b) { return (b.finishedAt || '').localeCompare(a.finishedAt || ''); }); }
   function saveDraft() { writeJSON(DRAFT_KEY, draft); }
+  function loadBody() { var b = readJSON(BODY_KEY, null); if (b && b.v === 1 && b.profile && b.days) body = b; }
+  function saveBody() { if (!writeJSON(BODY_KEY, body)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
+  var DAY_FIELDS = ['kg', 'kcal', 'protein', 'steps', 'waist', 'neck', 'hip'];
+  var PROFILE_FIELDS = ['height', 'birthYear', 'sex', 'goalBf', 'rate', 'maintenance'];
+  function cleanDay(iso) { var d = body.days[iso]; if (d && !DAY_FIELDS.some(function (f) { return d[f] != null; })) delete body.days[iso]; }
+  // Merge an imported body export: days we do not have, profile fields we have not set.
+  function mergeBody(b) {
+    var added = 0; if (!b || typeof b !== 'object') return 0;
+    Object.keys(b.days || {}).forEach(function (iso) {
+      var d = b.days[iso]; if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !d || typeof d !== 'object' || body.days[iso]) return;
+      var clean = {}; DAY_FIELDS.forEach(function (f) { if (num(d[f]) != null) clean[f] = num(d[f]); });
+      if (Object.keys(clean).length) { body.days[iso] = clean; added++; }
+    });
+    PROFILE_FIELDS.forEach(function (f) { if (body.profile[f] == null && b.profile && b.profile[f] != null) body.profile[f] = b.profile[f]; });
+    return added;
+  }
   function uid() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
 
   // ---------- dates ----------
@@ -432,7 +542,7 @@
 
   // ---------- helpers ----------
   function fmtKg(ex, kg) { if (kg == null || kg === '') return ex.load === 'bw' ? 'bodyweight' : '—'; if (ex.load === 'bw') return kg === 0 ? 'bodyweight' : '+' + kg + ' kg'; return kg + ' kg'; }
-  function unitOf(ex) { return ex.unit === 's' ? 's' : 'reps'; }
+  function unitOf(ex) { return ex.unit === 's' ? 'sec' : 'reps'; }
   function fmtReps(ex, r) { return ex.unit === 's' ? r + ' s' : String(r); }
   function targetOf(ex) { return '2 × ' + ex.reps[0] + '–' + ex.reps[1] + (ex.unit === 's' ? ' s' : '') + (ex.per ? ' / ' + ex.per : ''); }
   function fmtSets(ex, sets) {
@@ -638,6 +748,172 @@
     }).join('');
   }
 
+  // ---------- body: weight trend, intake, body fat ----------
+  function profile() {
+    var p = body.profile;
+    return { height: num(p.height), birthYear: num(p.birthYear), sex: p.sex === 'f' ? 'f' : 'm', goalBf: num(p.goalBf) == null ? 17 : num(p.goalBf), rate: num(p.rate) == null ? 0.6 : num(p.rate), maintenance: num(p.maintenance) };
+  }
+  function bodyDays() { return Object.keys(body.days).sort().map(function (iso) { var d = body.days[iso]; return { iso: iso, kg: num(d.kg), kcal: num(d.kcal), protein: num(d.protein), steps: num(d.steps), waist: num(d.waist), neck: num(d.neck), hip: num(d.hip) }; }); }
+  function daysBetween(a, b) { return Math.round((parseISO(b) - parseISO(a)) / 864e5); }
+  // Smoothed weight. The smoothing is per calendar day, so a skipped morning widens the step instead of being ignored.
+  function trendSeries() {
+    var out = [], t = null, prev = null;
+    bodyDays().forEach(function (d) {
+      if (d.kg == null) return;
+      if (t == null) t = d.kg; else t += (1 - Math.pow(1 - TREND_ALPHA, Math.max(1, daysBetween(prev, d.iso)))) * (d.kg - t);
+      prev = d.iso; out.push({ iso: d.iso, kg: d.kg, trend: t });
+    });
+    return out;
+  }
+  function log10(x) { return Math.log(x) / Math.LN10; }
+  // US Navy tape estimate. Needs height, waist and neck, plus hips for women.
+  function navyBf(p, m) {
+    if (!p.height || !m || m.waist == null || m.neck == null) return null; var bf;
+    if (p.sex === 'f') { if (m.hip == null) return null; var a = m.waist + m.hip - m.neck; if (a <= 0) return null; bf = 495 / (1.29579 - 0.35004 * log10(a) + 0.22100 * log10(p.height)) - 450; }
+    else { var w = m.waist - m.neck; if (w <= 0) return null; bf = 495 / (1.0324 - 0.19077 * log10(w) + 0.15456 * log10(p.height)) - 450; }
+    return isFinite(bf) && bf > 2 && bf < 70 ? bf : null;
+  }
+  function lastMeasure(p) {
+    var days = bodyDays();
+    for (var i = days.length - 1; i >= 0; i--) { var d = days[i]; if (d.waist != null && d.neck != null && (p.sex !== 'f' || d.hip != null)) return d; }
+    return null;
+  }
+  // Mifflin-St Jeor resting rate times 1.45: six short sessions a week and little walking.
+  function mifflin(p, kg) {
+    if (!p.height || !p.birthYear || kg == null) return null;
+    var age = new Date().getFullYear() - p.birthYear;
+    return Math.round((10 * kg + 6.25 * p.height - 5 * age + (p.sex === 'f' ? -161 : 5)) * 1.45);
+  }
+  function round(n, to) { return Math.round(n / to) * to; }
+  function fmtN(n) { return Math.round(n).toLocaleString('en-GB'); }
+  function fmtKgN(n) { return n.toFixed(1).replace(/\.0$/, ''); }
+  function bodyStats() {
+    var p = profile(); var ts = trendSeries(); var last = ts.length ? ts[ts.length - 1] : null; var days = bodyDays();
+    var st = { p: p, ts: ts, last: last, weighIns: ts.length, kg: last ? last.trend : null, rate: null, pct: null, from: null };
+    if (last && ts.length >= 7) {
+      var cutoff = isoOf(addDays(parseISO(last.iso), -RATE_SPAN));
+      for (var i = ts.length - 1; i >= 0; i--) if (ts[i].iso <= cutoff) { st.from = ts[i]; break; }
+      if (st.from) { st.rate = (last.trend - st.from.trend) / daysBetween(st.from.iso, last.iso) * 7; st.pct = st.rate / last.trend * 100; }
+    }
+    // Maintenance: measured from intake and the trend over the same span when most of those days have calories; otherwise the profile, otherwise an estimate.
+    st.maintenance = null; st.source = null;
+    if (st.rate != null) {
+      var sum = 0, n = 0; days.forEach(function (d) { if (d.kcal != null && d.iso > st.from.iso && d.iso <= last.iso) { sum += d.kcal; n++; } });
+      var span = daysBetween(st.from.iso, last.iso);
+      if (n >= Math.ceil(span * 0.6)) { st.maintenance = Math.round(sum / n - st.rate / 7 * KCAL_PER_KG); st.source = 'measured from ' + n + ' logged days'; }
+    }
+    if (st.maintenance == null && p.maintenance) { st.maintenance = p.maintenance; st.source = 'from your profile'; }
+    if (st.maintenance == null) { var est = mifflin(p, st.kg); if (est) { st.maintenance = est; st.source = 'estimated from height, weight, and age'; } }
+    st.deficit = st.kg ? p.rate / 100 * st.kg * KCAL_PER_KG / 7 : null;
+    st.target = st.maintenance && st.deficit ? round(st.maintenance - st.deficit, 10) : null;
+    st.protein = st.kg ? round(PROTEIN_PER_KG * st.kg, 5) : null;
+    // Last seven days of intake and steps.
+    var weekAgo = isoOf(addDays(new Date(), -6)); var k = 0, kn = 0, sSum = 0, sn = 0;
+    days.forEach(function (d) { if (d.iso < weekAgo || d.iso > todayISO()) return; if (d.kcal != null) { k += d.kcal; kn++; } if (d.steps != null) { sSum += d.steps; sn++; } });
+    st.weekKcal = kn ? Math.round(k / kn) : null; st.weekLogged = kn; st.weekSteps = sn ? Math.round(sSum / sn) : null;
+    // Body fat and the weight that goal body fat implies, keeping today's lean mass.
+    st.measure = lastMeasure(p); st.bf = navyBf(p, st.measure);
+    if (st.bf != null && st.kg) { st.lean = st.kg * (1 - st.bf / 100); st.goalKg = st.lean / (1 - p.goalBf / 100); st.toGo = st.kg - st.goalKg; }
+    return st;
+  }
+  function verdictOf(st) {
+    var p = st.p;
+    if (!st.last) return { cls: '', html: 'No weigh-ins yet. Type this morning\'s weight above. After about two weeks the trend and weekly rate appear here.' };
+    if (st.rate == null) return { cls: '', html: '<b>' + st.weighIns + ' weigh-in' + (st.weighIns === 1 ? '' : 's') + ' so far.</b> The weekly rate needs about two weeks of mornings, then this tells you whether to change anything.' };
+    var want = -p.rate, kcalPerPct = st.kg * KCAL_PER_KG / 700; var losing = st.pct < 0; var rateTxt = 'Losing ' + fmtKgN(-st.rate) + ' kg a week, ' + Math.abs(st.pct).toFixed(1) + ' % of bodyweight.';
+    if (st.pct > want + RATE_BAND) {
+      var cut = Math.min(500, Math.max(100, round((st.pct - want) * kcalPerPct, 50)));
+      return { cls: 'slow', html: '<b>Too slow.</b> ' + (losing ? rateTxt : (st.pct > RATE_BAND ? 'Gaining ' : 'Flat at ') + fmtKgN(Math.abs(st.rate)) + ' kg a week.') + ' Eat about <b>' + fmtN(cut) + ' kcal less</b> a day' + (st.weekLogged < 5 ? ', and log calories so the number has something to anchor to.' : '.') };
+    }
+    if (st.pct < want - RATE_BAND) {
+      var add = Math.min(500, Math.max(100, round((want - st.pct) * kcalPerPct, 50)));
+      return { cls: 'fast', html: '<b>Too fast.</b> ' + rateTxt + ' Faster than ' + p.rate + ' % costs muscle. Eat about <b>' + fmtN(add) + ' kcal more</b> a day.' };
+    }
+    return { cls: 'ok', html: '<b>On target.</b> ' + rateTxt + ' Change nothing.' };
+  }
+  function stat(b, s, small) { return '<div class="stat"><b>' + b + (small ? ' <small>' + small + '</small>' : '') + '</b><span>' + s + '</span></div>'; }
+  function renderBodyStats() {
+    var st = bodyStats(), p = st.p; var v = verdictOf(st);
+    var side = st.rate == null ? '' : '<div class="side ' + (st.rate < 0 ? 'losing' : 'gaining') + '"><b>' + (st.rate > 0 ? '+' : '−') + fmtKgN(Math.abs(st.rate)) + ' kg/wk</b><span>' + (st.pct > 0 ? '+' : '−') + Math.abs(st.pct).toFixed(1) + ' % a week · aim ' + p.rate + '</span></div>';
+    $('b-trend').innerHTML = '<div class="card-head"><div><span class="eyebrow">Trend weight</span><h2>' + (st.kg ? st.kg.toFixed(1) + ' kg' : 'No weight yet') + '</h2></div>' + side + '</div>' +
+      '<div class="verdict ' + v.cls + '">' + v.html + '</div>' +
+      '<svg class="chart" id="b-chart" viewBox="0 0 360 170" aria-label="Scale weight and trend, last eight weeks"></svg><div class="chart-read" id="b-read"></div>';
+    renderChart(st);
+    var mt = st.maintenance ? fmtN(st.maintenance) : '—';
+    $('b-intake').innerHTML = '<div class="card-head"><div><span class="eyebrow">Intake</span><h2>' + (st.target ? 'Eat about ' + fmtN(st.target) + ' kcal' : 'Set up your profile') + '</h2></div></div><div class="stats">' +
+      stat(mt, st.source ? 'maintenance, ' + st.source : 'maintenance needs height, birth year, and a weight') +
+      stat(st.protein ? fmtN(st.protein) : '—', 'protein a day, 1.8 g per kilo', 'g') +
+      stat(st.weekKcal != null ? fmtN(st.weekKcal) : '—', st.weekLogged ? 'kcal a day, ' + st.weekLogged + ' of 7 days logged' : 'no calories logged this week') +
+      stat(st.weekSteps != null ? fmtN(st.weekSteps) : '—', 'steps a day this week, aim for ' + fmtN(STEP_TARGET)) + '</div>' +
+      (st.target ? '<p class="muted small">' + fmtN(st.maintenance) + ' maintenance minus ' + fmtN(st.deficit) + ' kcal for ' + p.rate + ' % a week. The verdict above overrides this number: when the trend says you are too slow, eat less than it says.</p>' : '');
+    var fat = '<div class="card-head"><div><span class="eyebrow">Body fat</span><h2>' + (st.bf != null ? st.bf.toFixed(1) + ' %' : 'Not measured') + '</h2></div>' + (st.measure && st.bf != null ? '<span class="muted small">tape, ' + fmtDate(st.measure.iso) + '</span>' : '') + '</div>';
+    if (st.bf != null) fat += '<div class="stats">' + stat(fmtKgN(st.lean), 'kg lean mass') + stat(fmtKgN(st.goalKg), 'kg at ' + p.goalBf + ' % body fat') +
+      stat((st.toGo > 0 ? fmtKgN(st.toGo) : '0'), 'kg to go' + (st.toGo > 0 && st.rate < 0 ? ', about ' + Math.ceil(st.toGo / -st.rate) + ' weeks at this rate' : '')) +
+      stat(fmtKgN(st.kg * st.bf / 100), 'kg fat mass') + '</div><p class="muted small">Tape estimates are about ±3 points, but they move with the real number. Watch the waist trend, not one reading.</p>';
+    else fat += '<p class="muted small">' + (!p.height ? 'Add your height in the profile, then ' : '') + 'Measure waist and neck' + (p.sex === 'f' ? ' and hips' : '') + ' in the check-in to estimate body fat and the weight your goal implies.</p>';
+    $('b-fat').innerHTML = fat;
+    // Last two weeks of entries, tap to edit.
+    var cutoff = isoOf(addDays(new Date(), -13));
+    var rows = bodyDays().filter(function (d) { return d.iso >= cutoff; }).reverse();
+    $('b-recent').innerHTML = '<div class="card-head"><h2>Last two weeks</h2><span class="muted small">tap a day to edit it</span></div>' + (rows.length ? '<div class="brows"><div class="brow hdr"><span>Day</span><span>kg</span><span>kcal</span><span>prot</span><span>steps</span></div>' +
+      rows.map(function (d) { var c = function (v) { return v == null ? '<span class="muted">·</span>' : '<span>' + fmtN(v) + '</span>'; };
+        return '<div class="brow' + (d.iso === bodyDate ? ' sel' : '') + '" data-day="' + d.iso + '"><span>' + esc(fmtDate(d.iso)) + '</span>' + (d.kg == null ? '<span class="muted">·</span>' : '<span>' + d.kg.toFixed(1) + '</span>') + c(d.kcal) + c(d.protein) + c(d.steps) + '</div>'; }).join('') + '</div>'
+      : '<div class="empty">Nothing yet. Your mornings appear here.</div>');
+    $('b-profile-sum').textContent = p.height ? p.height + ' cm · ' + (p.birthYear ? (new Date().getFullYear() - p.birthYear) + ' · ' : '') + 'goal ' + p.goalBf + ' % · ' + p.rate + ' %/wk' : 'Set up';
+    $('b-hip-field').hidden = p.sex !== 'f';
+  }
+  function niceStep(raw) { var steps = [0.2, 0.5, 1, 2, 5, 10]; for (var i = 0; i < steps.length; i++) if (steps[i] >= raw) return steps[i]; return 10; }
+  function renderChart(st) {
+    var svg = $('b-chart'), read = $('b-read'); chartPts = [];
+    var W = 360, H = 170, L = 34, R = 12, T = 12, B = 22, N = 56;
+    var start = addDays(parseISO(todayISO()), -(N - 1)); var sISO = isoOf(start);
+    var pts = st.ts.filter(function (q) { return q.iso >= sISO; });
+    if (pts.length < 2) { svg.innerHTML = ''; svg.style.display = 'none'; read.textContent = pts.length ? 'Chart appears from the second weigh-in.' : ''; return; }
+    svg.style.display = '';
+    var lo = Infinity, hi = -Infinity;
+    pts.forEach(function (q) { lo = Math.min(lo, q.kg, q.trend); hi = Math.max(hi, q.kg, q.trend); });
+    var goal = st.goalKg != null && st.goalKg > lo - 3 && st.goalKg < hi + 3 ? st.goalKg : null;
+    if (goal != null) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
+    lo -= 0.4; hi += 0.4; if (hi - lo < 2) { var mid = (lo + hi) / 2; lo = mid - 1; hi = mid + 1; }
+    var x = function (iso) { return L + daysBetween(sISO, iso) / (N - 1) * (W - L - R); };
+    var y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); };
+    var step = niceStep((hi - lo) / 3), out = '';
+    for (var g = Math.ceil(lo / step) * step; g <= hi; g += step) out += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" stroke="var(--line)" stroke-width="1"/><text x="' + (L - 6) + '" y="' + (y(g) + 3.5).toFixed(1) + '" text-anchor="end">' + (step < 1 ? g.toFixed(1) : g) + '</text>';
+    if (goal != null) out += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(goal).toFixed(1) + '" y2="' + y(goal).toFixed(1) + '" stroke="var(--legs)" stroke-width="1.5" stroke-dasharray="4 4"/><text x="' + (L + 4) + '" y="' + (y(goal) - 4).toFixed(1) + '" text-anchor="start" fill="var(--legs)">goal ' + fmtKgN(goal) + '</text>';
+    pts.forEach(function (q) { out += '<circle cx="' + x(q.iso).toFixed(1) + '" cy="' + y(q.kg).toFixed(1) + '" r="3.5" fill="var(--muted)" opacity=".45"/>'; });
+    out += '<path d="' + pts.map(function (q, i) { return (i ? 'L' : 'M') + x(q.iso).toFixed(1) + ' ' + y(q.trend).toFixed(1); }).join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    var lp = pts[pts.length - 1];
+    out += '<circle id="b-dot" cx="' + x(lp.iso).toFixed(1) + '" cy="' + y(lp.trend).toFixed(1) + '" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>';
+    out += '<text x="' + L + '" y="' + (H - 6) + '" text-anchor="start">' + esc(start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">today</text>';
+    svg.innerHTML = out;
+    chartPts = pts.map(function (q) { return { iso: q.iso, kg: q.kg, trend: q.trend, x: x(q.iso), y: y(q.trend) }; });
+    showReading(chartPts.length - 1);
+  }
+  function showReading(i) {
+    var q = chartPts[i]; if (!q) return;
+    $('b-read').innerHTML = esc(fmtDate(q.iso)) + ' · scale <b>' + q.kg.toFixed(1) + '</b> · trend <b>' + q.trend.toFixed(1) + '</b> kg';
+    var dot = $('b-dot'); if (dot) { dot.setAttribute('cx', q.x.toFixed(1)); dot.setAttribute('cy', q.y.toFixed(1)); }
+  }
+  function renderBodyInputs() {
+    var d = body.days[bodyDate] || {}; var days = bodyDays(); var p = profile();
+    $('b-date').value = bodyDate; $('b-date').max = todayISO();
+    $('b-title').textContent = bodyDate === todayISO() ? 'Today' : fmtDate(bodyDate);
+    DAY_FIELDS.forEach(function (f) {
+      var inp = $('b-' + f); inp.value = d[f] == null ? '' : d[f]; inp.classList.toggle('filled', d[f] != null);
+      var last = null; for (var i = days.length - 1; i >= 0; i--) if (days[i].iso < bodyDate && days[i][f] != null) { last = days[i][f]; break; }
+      inp.placeholder = last == null ? '—' : String(last);
+    });
+    // One tap copies the last logged calories (and protein) when this day has none yet.
+    var src = null; for (var j = days.length - 1; j >= 0; j--) if (days[j].iso < bodyDate && days[j].kcal != null) { src = days[j]; break; }
+    var copy = $('b-copy'); copy.hidden = !(src && d.kcal == null);
+    copy.setAttribute('data-src', src ? src.iso : '');
+    if (src) copy.textContent = 'Same as ' + (daysBetween(src.iso, bodyDate) === 1 ? 'yesterday' : fmtDate(src.iso)) + ': ' + fmtN(src.kcal) + ' kcal';
+    PROFILE_FIELDS.forEach(function (f) { var inp = $('p-' + f); var v = body.profile[f]; inp.value = v == null ? (f === 'sex' ? 'm' : '') : v; });
+    $('p-maintenance').placeholder = (function () { var est = mifflin(p, trendSeries().length ? trendSeries()[trendSeries().length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
+    $('b-hip-field').hidden = p.sex !== 'f';
+  }
+  function renderBody() { renderBodyInputs(); renderBodyStats(); }
+
   // ---------- render: program ----------
   function renderProgram() {
     $('program-sessions').innerHTML = PROGRAM.map(function (s, i) {
@@ -648,13 +924,13 @@
     }).join('');
   }
 
-  function renderAll() { renderWeek(); renderPicker(); renderToday(); renderCalendar(); renderBars(); renderHistory(); }
+  function renderAll() { renderWeek(); renderPicker(); renderToday(); renderCalendar(); renderBars(); renderHistory(); renderBody(); }
 
   // ---------- tabs ----------
-  var TITLES = { log: ['Today', fmtLong(new Date())], history: ['History', 'Consistency and every session'], program: ['Program', 'Home push / pull / legs'] };
+  var TITLES = { log: ['Today', fmtLong(new Date())], body: ['Body', 'Weight, intake, and body fat'], history: ['History', 'Consistency and every session'], program: ['Program', 'Home push / pull / legs'] };
   function showTab(name) {
     if (!TITLES[name]) name = 'log';
-    ['log', 'history', 'program'].forEach(function (t) { $('view-' + t).hidden = (t !== name); });
+    ['log', 'body', 'history', 'program'].forEach(function (t) { $('view-' + t).hidden = (t !== name); });
     document.querySelectorAll('nav.tabs button').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === name)); });
     $('hdr-title').textContent = TITLES[name][0]; $('hdr-sub').textContent = TITLES[name][1];
     try { localStorage.setItem(TAB_KEY, name); } catch (e) {}
@@ -747,6 +1023,50 @@
     setStatus('Saved. ' + PROGRAM[selected].name + ' is up next.', 'ok');
   });
 
+  // ---------- events: body ----------
+  var bodyForm = $('body-form');
+  bodyForm.addEventListener('submit', function (e) { e.preventDefault(); });
+  bodyForm.addEventListener('change', function (e) {
+    if (e.target.id !== 'b-date') return;
+    bodyDate = e.target.value || todayISO(); renderBody();
+  });
+  bodyForm.addEventListener('input', function (e) {
+    var f = e.target.getAttribute('data-f'); if (!f) return;
+    var v = num(e.target.value); if (!body.days[bodyDate]) body.days[bodyDate] = {};
+    if (v == null) delete body.days[bodyDate][f]; else body.days[bodyDate][f] = v;
+    cleanDay(bodyDate); saveBody(); e.target.classList.toggle('filled', v != null);
+    if (f === 'kcal') $('b-copy').hidden = v != null || !$('b-copy').getAttribute('data-src');
+    $('b-status').textContent = 'Saved.'; $('b-status').className = 'status ok';
+    renderBodyStats();
+  });
+  bodyForm.addEventListener('click', function (e) {
+    if (e.target.id !== 'b-copy') return;
+    var src = body.days[e.target.getAttribute('data-src')]; if (!src) return;
+    var d = body.days[bodyDate] || (body.days[bodyDate] = {});
+    d.kcal = src.kcal; if (src.protein != null && d.protein == null) d.protein = src.protein;
+    saveBody(); renderBody(); $('b-status').textContent = 'Saved.'; $('b-status').className = 'status ok';
+  });
+  $('b-recent').addEventListener('click', function (e) {
+    var row = e.target.closest('[data-day]'); if (!row) return;
+    bodyDate = row.getAttribute('data-day'); renderBody(); window.scrollTo({ top: 0, behavior: 'smooth' }); $('b-kg').focus();
+  });
+  $('b-profile').addEventListener('input', function (e) {
+    var f = e.target.getAttribute('data-p'); if (!f) return;
+    var v = f === 'sex' ? e.target.value : num(e.target.value);
+    if (v == null || v === '') delete body.profile[f]; else body.profile[f] = v;
+    saveBody(); renderBodyStats();
+    $('p-maintenance').placeholder = (function () { var ts = trendSeries(); var est = mifflin(profile(), ts.length ? ts[ts.length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
+  });
+  // Tap or drag across the chart to read a day.
+  $('b-trend').addEventListener('pointerdown', chartRead);
+  $('b-trend').addEventListener('pointermove', function (e) { if (e.buttons || e.pointerType === 'mouse') chartRead(e); });
+  function chartRead(e) {
+    var svg = e.target.closest('#b-chart'); if (!svg || !chartPts.length) return;
+    var r = svg.getBoundingClientRect(); var px = (e.clientX - r.left) / r.width * 360; var best = 0;
+    chartPts.forEach(function (q, i) { if (Math.abs(q.x - px) < Math.abs(chartPts[best].x - px)) best = i; });
+    showReading(best);
+  }
+
   // ---------- events: history ----------
   hist.addEventListener('click', function (e) {
     var t = e.target;
@@ -764,7 +1084,7 @@
     var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
-  $('export-json').addEventListener('click', function () { download('ppl-log-' + todayISO() + '.json', JSON.stringify({ exported: new Date().toISOString(), sessions: history }, null, 2), 'application/json'); });
+  $('export-json').addEventListener('click', function () { download('ppl-log-' + todayISO() + '.json', JSON.stringify({ exported: new Date().toISOString(), sessions: history, body: body }, null, 2), 'application/json'); });
   $('export-csv').addEventListener('click', function () {
     var rows = [['date', 'session', 'exercise', 'set1_kg', 'set1_reps', 'set2_kg', 'set2_reps', 'set3_kg', 'set3_reps', 'set4_kg', 'set4_reps', 'notes']];
     history.slice().reverse().forEach(function (h) { (h.exercises || []).forEach(function (e) {
@@ -783,9 +1103,10 @@
         if (!Array.isArray(list)) throw new Error('no sessions array');
         var seen = {}; history.forEach(function (h) { seen[h.id] = true; }); var added = 0;
         list.forEach(function (h) { if (h && h.session && Array.isArray(h.exercises) && !seen[h.id]) { if (!h.id) h.id = uid(); normalizeSession(h); history.push(h); seen[h.id] = true; added++; } });
+        var bodyAdded = mergeBody(data.body); if (bodyAdded) saveBody();
         persistHistory(); if (autoSelected && !draftTouched()) { selected = nextIndex(); draft = null; saveDraft(); }
         renderAll();
-        showBanner('Imported ' + added + ' session' + (added === 1 ? '' : 's') + '.');
+        showBanner('Imported ' + added + ' session' + (added === 1 ? '' : 's') + (bodyAdded ? ' and ' + bodyAdded + ' body day' + (bodyAdded === 1 ? '' : 's') : '') + '.');
       } catch (err) { showBanner('Could not import that file. It must be a JSON export from this app.', true); }
       input.value = '';
     };
@@ -793,7 +1114,7 @@
   });
 
   // ---------- boot ----------
-  loadHistory();
+  loadHistory(); loadBody();
   draft = readJSON(DRAFT_KEY, null);
   if (draft && !draftTouched()) draft = null;
   if (draft) { var di = PROGRAM.findIndex(function (s) { return s.key === draft.session; }); if (di >= 0) { selected = di; autoSelected = (di === nextIndex()); } else draft = null; }

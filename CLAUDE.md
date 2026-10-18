@@ -6,7 +6,7 @@ Omer's personal home training program and the small web app that logs it. Phone 
 
 - **Live app:** https://omeryesilkaya.github.io/strength-training/ (GitHub Pages, public repo `OmerYesilkaya/strength-training`, served from the root of `main`).
 - **Stack:** one hand-written `index.html` (HTML, CSS, ES5-style JS, no build, no dependencies beyond a Google Font), a service worker `sw.js`, `manifest.webmanifest`, and two PNG icons. Installable PWA, works offline.
-- **Data:** lives only in the phone's `localStorage`. There is no backend. History tab has JSON and CSV export and JSON import (merge by session id).
+- **Data:** lives only in the phone's `localStorage`. There is no backend. History tab has JSON and CSV export and JSON import (sessions merge by id, body days merge by date, profile fields fill in only where empty). The JSON export carries both sessions and body data; the CSV is sessions only.
 - `PROGRAM.html` is an older standalone, printable copy of the program (green design). The app's Program tab is the source of truth; keep `PROGRAM.html` only if asked.
 
 ## Training design (why the app does what it does)
@@ -20,12 +20,22 @@ Omer's personal home training program and the small web app that logs it. Phone 
   - Set 1 lands under the bottom two sessions in a row at the same weight: next time suggests −2 kg, highlighted amber. Never below zero; at bodyweight the hint suggests an easier variation instead.
 - **Within a session** the same rule runs between sets: a set at the top of the range pre-fills the next set +2 kg, a set under the bottom pre-fills it −2 kg. Only sets with no reps typed yet, that still mirror the previous set, follow; a kg the user typed is never overwritten.
 
+## Body tab (weight, intake, body fat)
+
+- Purpose: Omer is cutting to 16–18 % body fat. The weight trend is the ground truth and calories are the lever, so the tab must stay useful when calories are missing. Intake is one rough number a day in "his own units" (consistent guesses); a systematic underestimate cancels out because maintenance is measured from his own intake and trend.
+- Storage key `ppl.body`: `{ v: 1, profile: { height, birthYear, sex: 'm' | 'f', goalBf, rate, maintenance }, days: { 'YYYY-MM-DD': { kg, kcal, protein, steps, waist, neck, hip } } }`. Every field optional; empty days are pruned. Defaults: goal 17 %, rate 0.6 % of bodyweight a week.
+- Trend: per-day exponential smoothing (`TREND_ALPHA`), with the step widened for skipped mornings. Weekly rate = trend now minus trend at least `RATE_SPAN` (14) days earlier, shown once there are 7 weigh-ins. Verdict: within `RATE_BAND` (0.25 %/wk) of the target rate is "on target"; slower says "eat N kcal less", faster says "eat N kcal more" (N from the gap, 100–500).
+- Maintenance, in priority order: measured (mean logged kcal over the rate span minus the trend change in kcal, needs ≥ 60 % of those days logged), the profile value, Mifflin-St Jeor × 1.45. Target intake = maintenance − deficit for the target rate. Protein 1.8 g/kg, step target 7 000.
+- Body fat is the US Navy tape formula from the latest day with waist and neck (and hips for women); goal weight = lean mass / (1 − goal bf). Chart is inline SVG, last 56 days, dots are scale weight, line is trend, dashed green line is goal weight when near the range. Tap or drag on the chart for a readout.
+- Check-in form saves on input to the day in the date picker; placeholders show the last logged value; "Same as yesterday" copies the last kcal and protein. The recent-days list is tap-to-edit. Profile is a collapsible card at the bottom.
+- Key functions: `bodyStats` (everything computed), `trendSeries`, `verdictOf`, `navyBf`, `mifflin`, `renderBodyInputs` / `renderBodyStats` / `renderChart`, `mergeBody` (import).
+
 ## Code map (`index.html`)
 
 - Design tokens on `:root` with a dark block under `prefers-color-scheme: dark`. Indigo accent, white rounded cards on a soft grey-blue page, Plus Jakarta Sans. Session types colour the UI: push indigo, pull coral, legs green. Step-up uses the accent tokens, step-down the `--warn-*` tokens, delete the `--bad-*` tokens.
 - `PROGRAM` constant: six sessions, each `{ key, type, name, focus, ex: [{ key, name, reps: [lo, hi], warm?, load?: 'bw', per?, unit?: 's', note? }] }`. `unit: 's'` marks a timed exercise (farmer's carry): the reps field and stored `reps` hold seconds, and the progression rule works on them unchanged. **Exercise `key`s are shared across sessions and link history and suggestions. Never rename a key; rename `name` instead.** Program changes are made here by hand; Omer tells the agent, the agent edits and pushes.
-- Constants: `STEP` (2 kg), `SWIPE_DELETE` (88 px), `TARGET_PER_WEEK` (6), storage keys `ppl.sessions`, `ppl.draft`, `ppl.tab`.
-- State: `history` (sessions, newest first), `selected` session index, `autoSelected` (follows "up next" until the user picks), `draft` (the session being entered), `deleteArmed`, `calMonth`.
+- Constants: `STEP` (2 kg), `SWIPE_DELETE` (88 px), `TARGET_PER_WEEK` (6), body constants listed above, storage keys `ppl.sessions`, `ppl.draft`, `ppl.tab`, `ppl.body`.
+- State: `history` (sessions, newest first), `selected` session index, `autoSelected` (follows "up next" until the user picks), `draft` (the session being entered), `deleteArmed`, `calMonth`, `body` (profile and days), `bodyDate` (the day the check-in form edits).
 - Stored session shape: `{ id, date (YYYY-MM-DD), session (PROGRAM key), sessionName, exercises: [{ key, name, load, sets: [{ kg, reps }] }], notes, finishedAt }`. `normalizeSession` migrates the older shape (one `kg` per exercise, reps-only `sets`) on load and on import. Keep that migration.
 - Draft shape: `{ v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested: 'up' | 'down' | false } }, notes }`. A draft with a different `v` is discarded.
 - Key functions: `recentFor` / `suggest` (next-session rule), `wantedKg` / `mirrors` / `setKg` / `applySteps` / `syncRow` (within-session rule), `ensureDraft`, `renderWeek` / `renderCalendar` / `renderBars` (consistency views), `renderToday`, `renderHistory`, `renderProgram`, swipe handlers on `form` (pointer events, `touch-action: pan-y`).
