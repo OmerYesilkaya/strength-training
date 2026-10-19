@@ -148,7 +148,7 @@
   .btn.ghost { background: var(--surface-2); color: var(--ink); padding: 9px 14px; font-size: 14px; min-height: 38px; }
   .btn.danger { background: var(--bad-soft); color: var(--bad-ink); padding: 7px 12px; font-size: 13px; min-height: 34px; }
   .status { font-size: 14px; color: var(--muted); }
-  .status.ok { color: var(--accent-ink); }
+  .status.ok, .muted.ok { color: var(--accent-ink); }
   .status.bad { color: var(--bad-ink); }
 
   /* Consistency: calendar + weekly bars */
@@ -217,6 +217,17 @@
   .fin::placeholder { color: var(--muted); opacity: .7; font-weight: 600; }
   .fin.filled { border-color: var(--accent-soft); }
   .field .unit { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); }
+  .meal-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+  .meal-add .btn { min-height: 46px; padding: 0 18px; }
+  .meals { display: flex; flex-direction: column; }
+  .meal { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .meal .t { color: var(--muted); font-weight: 600; width: 44px; flex: none; }
+  .meal .v { font-weight: 700; flex: 1; }
+  .meal .v small { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .meal .x { appearance: none; border: 0; background: var(--surface-2); color: var(--muted); width: 30px; height: 30px; border-radius: 50%; font: inherit; font-size: 16px; line-height: 1; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .meal-total { display: flex; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 2px solid var(--line); font-size: 14px; font-weight: 700; }
+  .meal-total span { color: var(--muted); font-weight: 600; }
+  .meal-total.over b { color: var(--warn-ink); }
   .side { text-align: right; display: flex; flex-direction: column; }
   .side b { font-size: 18px; font-weight: 800; line-height: 1.15; }
   .side span { font-size: 12.5px; color: var(--muted); }
@@ -282,19 +293,29 @@
 
   <!-- Body -->
   <div class="view" id="view-body" hidden>
-    <form class="card" id="body-form" autocomplete="off">
-      <div class="card-head"><div><span class="eyebrow">Morning check-in</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
-      <div class="bgrid">
-        <div class="field"><label for="b-kg">Weight <span class="unit">kg</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="20" max="300" id="b-kg" data-f="kg" placeholder="—"></div>
-        <div class="field"><label for="b-kcal">Calories <span class="unit">kcal</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="0" max="20000" id="b-kcal" data-f="kcal" placeholder="—"></div>
-        <div class="field"><label for="b-protein">Protein <span class="unit">g</span></label><input class="fin" type="number" inputmode="numeric" min="0" max="1000" id="b-protein" data-f="protein" placeholder="—"></div>
-        <div class="field"><label for="b-steps">Steps</label><input class="fin" type="number" inputmode="numeric" step="100" min="0" max="100000" id="b-steps" data-f="steps" placeholder="—"></div>
-        <div class="field"><label for="b-waist">Waist <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="40" max="200" id="b-waist" data-f="waist" placeholder="—"></div>
-        <div class="field"><label for="b-neck">Neck <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="20" max="80" id="b-neck" data-f="neck" placeholder="—"></div>
-        <div class="field" id="b-hip-field" hidden><label for="b-hip">Hips <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="50" max="200" id="b-hip" data-f="hip" placeholder="—"></div>
+    <form class="view" id="body-form" autocomplete="off">
+      <div class="card">
+        <div class="card-head"><div><span class="eyebrow">Morning</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
+        <div class="bgrid">
+          <div class="field"><label for="b-kg">Weight <span class="unit">kg</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="20" max="300" id="b-kg" data-f="kg" placeholder="—"></div>
+          <div class="field"><label for="b-waist">Waist <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="40" max="200" id="b-waist" data-f="waist" placeholder="—"></div>
+          <div class="field"><label for="b-neck">Neck <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="20" max="80" id="b-neck" data-f="neck" placeholder="—"></div>
+          <div class="field" id="b-hip-field" hidden><label for="b-hip">Hips <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="50" max="200" id="b-hip" data-f="hip" placeholder="—"></div>
+        </div>
+        <p class="muted small" id="b-status">Weigh after the bathroom and before food. Tape once a week: waist at the navel, neck just below the Adam's apple, snug and relaxed. Saves as you type.</p>
       </div>
-      <div class="actions"><button type="button" class="btn ghost" id="b-copy" hidden></button><span class="status" id="b-status">Saves as you type. Skipped days are fine.</span></div>
-      <p class="muted small">Weigh after the bathroom and before food. Waist at the navel and neck just below the Adam's apple, once a week, tape snug and relaxed.</p>
+      <div class="card">
+        <div class="card-head"><div><span class="eyebrow">Through the day</span><h2 id="b-title2">Food and steps</h2></div></div>
+        <div class="meal-add">
+          <div class="field"><label for="b-mkcal">Meal <span class="unit">kcal</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="0" max="10000" id="b-mkcal" placeholder="kcal"></div>
+          <div class="field"><label for="b-mprot">Protein <span class="unit">g</span></label><input class="fin" type="number" inputmode="numeric" min="0" max="500" id="b-mprot" placeholder="—"></div>
+          <button type="submit" class="btn" id="b-madd">Add</button>
+        </div>
+        <div id="b-meals" class="meals"></div>
+        <div class="actions"><button type="button" class="btn ghost" id="b-copy" hidden></button></div>
+        <div class="field" style="max-width:200px"><label for="b-steps">Steps <span class="unit">from the phone, end of day</span></label><input class="fin" type="number" inputmode="numeric" step="100" min="0" max="100000" id="b-steps" data-f="steps" placeholder="—"></div>
+        <p class="muted small">Add each meal as you finish it, in round numbers. Dinners you did not cook: guess in hundreds, the same way every time.</p>
+      </div>
     </form>
     <div class="card" id="b-trend"></div>
     <div class="card" id="b-intake"></div>
@@ -482,7 +503,8 @@
   var draft = null;        // { v: 2, session, date, ex: { key: { sets: [{ kg, reps }], suggested: 'up' | 'down' | false } }, notes }
   var deleteArmed = null;
   var calMonth = startOfMonth(new Date());
-  // Body data: { v: 1, profile: { height, birthYear, sex, goalBf, rate, maintenance }, days: { 'YYYY-MM-DD': { kg, kcal, protein, steps, waist, neck, hip } } }
+  // Body data: { v: 1, profile: { height, birthYear, sex, goalBf, rate, maintenance }, days: { 'YYYY-MM-DD': { kg, steps, waist, neck, hip, meals: [{ kcal, protein?, at? }] } } }
+  // A day's calories and protein are the sum of its meals. Days saved before meals existed carried one `kcal` / `protein` pair; `normalizeDay` folds that into a single meal.
   var body = { v: 1, profile: {}, days: {} };
   var bodyDate = todayISO();   // the day the check-in form edits
   var chartPts = [];           // plotted trend points, for the tap readout
@@ -511,17 +533,30 @@
   function persistHistory() { sortHistory(); if (!writeJSON(STORE_KEY, history)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
   function sortHistory() { history.sort(function (a, b) { return (b.finishedAt || '').localeCompare(a.finishedAt || ''); }); }
   function saveDraft() { writeJSON(DRAFT_KEY, draft); }
-  function loadBody() { var b = readJSON(BODY_KEY, null); if (b && b.v === 1 && b.profile && b.days) body = b; }
+  function loadBody() {
+    var b = readJSON(BODY_KEY, null); if (!(b && b.v === 1 && b.profile && b.days)) return;
+    body = b; var changed = false; Object.keys(body.days).forEach(function (iso) { if (normalizeDay(body.days[iso])) changed = true; });
+    if (changed) saveBody();
+  }
+  function normalizeDay(d) {
+    if (!d || typeof d !== 'object' || num(d.kcal) == null) return false;
+    var m = { kcal: num(d.kcal) }; if (num(d.protein) != null) m.protein = num(d.protein);
+    d.meals = (Array.isArray(d.meals) ? d.meals : []).concat([m]); delete d.kcal; delete d.protein; return true;
+  }
+  function mealsOf(d) { return Array.isArray(d && d.meals) ? d.meals : []; }
+  function nowHM() { var t = new Date(); return pad(t.getHours()) + ':' + pad(t.getMinutes()); }
   function saveBody() { if (!writeJSON(BODY_KEY, body)) showBanner('Could not save. Your browser is blocking storage for this page.', true); }
-  var DAY_FIELDS = ['kg', 'kcal', 'protein', 'steps', 'waist', 'neck', 'hip'];
+  var DAY_FIELDS = ['kg', 'steps', 'waist', 'neck', 'hip'];
   var PROFILE_FIELDS = ['height', 'birthYear', 'sex', 'goalBf', 'rate', 'maintenance'];
-  function cleanDay(iso) { var d = body.days[iso]; if (d && !DAY_FIELDS.some(function (f) { return d[f] != null; })) delete body.days[iso]; }
+  function cleanDay(iso) { var d = body.days[iso]; if (!d) return; if (d.meals && !d.meals.length) delete d.meals; if (!d.meals && !DAY_FIELDS.some(function (f) { return d[f] != null; })) delete body.days[iso]; }
   // Merge an imported body export: days we do not have, profile fields we have not set.
   function mergeBody(b) {
     var added = 0; if (!b || typeof b !== 'object') return 0;
     Object.keys(b.days || {}).forEach(function (iso) {
       var d = b.days[iso]; if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !d || typeof d !== 'object' || body.days[iso]) return;
       var clean = {}; DAY_FIELDS.forEach(function (f) { if (num(d[f]) != null) clean[f] = num(d[f]); });
+      var meals = []; mealsOf(d).forEach(function (m) { if (m && num(m.kcal) != null) { var c = { kcal: num(m.kcal) }; if (num(m.protein) != null) c.protein = num(m.protein); if (typeof m.at === 'string') c.at = m.at; meals.push(c); } });
+      if (meals.length) clean.meals = meals; if (num(d.kcal) != null) { clean.kcal = num(d.kcal); if (num(d.protein) != null) clean.protein = num(d.protein); normalizeDay(clean); }
       if (Object.keys(clean).length) { body.days[iso] = clean; added++; }
     });
     PROFILE_FIELDS.forEach(function (f) { if (body.profile[f] == null && b.profile && b.profile[f] != null) body.profile[f] = b.profile[f]; });
@@ -753,7 +788,12 @@
     var p = body.profile;
     return { height: num(p.height), birthYear: num(p.birthYear), sex: p.sex === 'f' ? 'f' : 'm', goalBf: num(p.goalBf) == null ? 17 : num(p.goalBf), rate: num(p.rate) == null ? 0.6 : num(p.rate), maintenance: num(p.maintenance) };
   }
-  function bodyDays() { return Object.keys(body.days).sort().map(function (iso) { var d = body.days[iso]; return { iso: iso, kg: num(d.kg), kcal: num(d.kcal), protein: num(d.protein), steps: num(d.steps), waist: num(d.waist), neck: num(d.neck), hip: num(d.hip) }; }); }
+  function dayTotals(d) {
+    var kcal = null, protein = null;
+    mealsOf(d).forEach(function (m) { if (num(m.kcal) == null) return; kcal = (kcal || 0) + num(m.kcal); if (num(m.protein) != null) protein = (protein || 0) + num(m.protein); });
+    return { kcal: kcal, protein: protein };
+  }
+  function bodyDays() { return Object.keys(body.days).sort().map(function (iso) { var d = body.days[iso]; var t = dayTotals(d); return { iso: iso, kg: num(d.kg), kcal: t.kcal, protein: t.protein, steps: num(d.steps), waist: num(d.waist), neck: num(d.neck), hip: num(d.hip) }; }); }
   function daysBetween(a, b) { return Math.round((parseISO(b) - parseISO(a)) / 864e5); }
   // Smoothed weight. The smoothing is per calendar day, so a skipped morning widens the step instead of being ignored.
   function trendSeries() {
@@ -798,8 +838,10 @@
     // Maintenance: measured from intake and the trend over the same span when most of those days have calories; otherwise the profile, otherwise an estimate.
     st.maintenance = null; st.source = null;
     if (st.rate != null) {
-      var sum = 0, n = 0; days.forEach(function (d) { if (d.kcal != null && d.iso > st.from.iso && d.iso <= last.iso) { sum += d.kcal; n++; } });
-      var span = daysBetween(st.from.iso, last.iso);
+      // Today is still being eaten, so it stays out of the intake mean.
+      var sum = 0, n = 0, end = last.iso < todayISO() ? last.iso : isoOf(addDays(new Date(), -1));
+      days.forEach(function (d) { if (d.kcal != null && d.iso > st.from.iso && d.iso <= end) { sum += d.kcal; n++; } });
+      var span = daysBetween(st.from.iso, end);
       if (n >= Math.ceil(span * 0.6)) { st.maintenance = Math.round(sum / n - st.rate / 7 * KCAL_PER_KG); st.source = 'measured from ' + n + ' logged days'; }
     }
     if (st.maintenance == null && p.maintenance) { st.maintenance = p.maintenance; st.source = 'from your profile'; }
@@ -898,19 +940,34 @@
     var d = body.days[bodyDate] || {}; var days = bodyDays(); var p = profile();
     $('b-date').value = bodyDate; $('b-date').max = todayISO();
     $('b-title').textContent = bodyDate === todayISO() ? 'Today' : fmtDate(bodyDate);
+    $('b-title2').textContent = bodyDate === todayISO() ? 'Food and steps' : 'Food and steps, ' + fmtDate(bodyDate);
     DAY_FIELDS.forEach(function (f) {
       var inp = $('b-' + f); inp.value = d[f] == null ? '' : d[f]; inp.classList.toggle('filled', d[f] != null);
       var last = null; for (var i = days.length - 1; i >= 0; i--) if (days[i].iso < bodyDate && days[i][f] != null) { last = days[i][f]; break; }
       inp.placeholder = last == null ? '—' : String(last);
     });
-    // One tap copies the last logged calories (and protein) when this day has none yet.
+    renderMeals(d);
+    // One tap copies the last logged day's meals when this day has none yet.
     var src = null; for (var j = days.length - 1; j >= 0; j--) if (days[j].iso < bodyDate && days[j].kcal != null) { src = days[j]; break; }
-    var copy = $('b-copy'); copy.hidden = !(src && d.kcal == null);
+    var copy = $('b-copy'); copy.hidden = !(src && !mealsOf(d).length);
     copy.setAttribute('data-src', src ? src.iso : '');
     if (src) copy.textContent = 'Same as ' + (daysBetween(src.iso, bodyDate) === 1 ? 'yesterday' : fmtDate(src.iso)) + ': ' + fmtN(src.kcal) + ' kcal';
+    $('b-mkcal').value = ''; $('b-mprot').value = '';
     PROFILE_FIELDS.forEach(function (f) { var inp = $('p-' + f); var v = body.profile[f]; inp.value = v == null ? (f === 'sex' ? 'm' : '') : v; });
     $('p-maintenance').placeholder = (function () { var est = mifflin(p, trendSeries().length ? trendSeries()[trendSeries().length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
     $('b-hip-field').hidden = p.sex !== 'f';
+  }
+  function renderMeals(d) {
+    var meals = mealsOf(d); var t = dayTotals(d); var st = bodyStats();
+    var html = meals.map(function (m, i) {
+      return '<div class="meal"><span class="t">' + esc(m.at || '') + '</span><span class="v">' + fmtN(m.kcal) + ' kcal' + (m.protein != null ? ' <small>· ' + fmtN(m.protein) + ' g</small>' : '') + '</span><button type="button" class="x" data-meal="' + i + '" aria-label="Remove meal">×</button></div>';
+    }).join('');
+    if (meals.length) {
+      var left = st.target != null ? st.target - t.kcal : null;
+      html += '<div class="meal-total' + (left != null && left < 0 ? ' over' : '') + '"><b>' + fmtN(t.kcal) + (st.target ? ' of ' + fmtN(st.target) : '') + ' kcal' + (t.protein != null ? ' · ' + fmtN(t.protein) + (st.protein ? ' of ' + fmtN(st.protein) : '') + ' g' : '') + '</b>' +
+        (left != null ? '<span>' + (left >= 0 ? fmtN(left) + ' left' : fmtN(-left) + ' over') + '</span>' : '') + '</div>';
+    } else html = '<p class="muted small" style="padding-top:2px">Nothing added yet' + (bodyDate === todayISO() ? ' today' : '') + '.</p>';
+    $('b-meals').innerHTML = html;
   }
   function renderBody() { renderBodyInputs(); renderBodyStats(); }
 
@@ -1025,7 +1082,16 @@
 
   // ---------- events: body ----------
   var bodyForm = $('body-form');
-  bodyForm.addEventListener('submit', function (e) { e.preventDefault(); });
+  function flashSaved() { var el = $('b-status'); el.textContent = 'Saved.'; el.className = 'muted small ok'; }
+  // Enter in any field, or the Add button, adds the meal typed in the adder.
+  bodyForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var kcal = num($('b-mkcal').value); if (kcal == null) { $('b-mkcal').focus(); return; }
+    var d = body.days[bodyDate] || (body.days[bodyDate] = {}); var m = { kcal: kcal }; var pr = num($('b-mprot').value); if (pr != null) m.protein = pr;
+    if (bodyDate === todayISO()) m.at = nowHM();
+    d.meals = mealsOf(d).concat([m]); saveBody();
+    renderBody(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  });
   bodyForm.addEventListener('change', function (e) {
     if (e.target.id !== 'b-date') return;
     bodyDate = e.target.value || todayISO(); renderBody();
@@ -1035,16 +1101,16 @@
     var v = num(e.target.value); if (!body.days[bodyDate]) body.days[bodyDate] = {};
     if (v == null) delete body.days[bodyDate][f]; else body.days[bodyDate][f] = v;
     cleanDay(bodyDate); saveBody(); e.target.classList.toggle('filled', v != null);
-    if (f === 'kcal') $('b-copy').hidden = v != null || !$('b-copy').getAttribute('data-src');
-    $('b-status').textContent = 'Saved.'; $('b-status').className = 'status ok';
-    renderBodyStats();
+    flashSaved(); renderBodyStats();
   });
   bodyForm.addEventListener('click', function (e) {
+    var x = e.target.closest('[data-meal]');
+    if (x) { var dd = body.days[bodyDate]; if (!dd) return; dd.meals = mealsOf(dd).filter(function (_, i) { return i !== +x.getAttribute('data-meal'); }); cleanDay(bodyDate); saveBody(); renderBody(); return; }
     if (e.target.id !== 'b-copy') return;
     var src = body.days[e.target.getAttribute('data-src')]; if (!src) return;
     var d = body.days[bodyDate] || (body.days[bodyDate] = {});
-    d.kcal = src.kcal; if (src.protein != null && d.protein == null) d.protein = src.protein;
-    saveBody(); renderBody(); $('b-status').textContent = 'Saved.'; $('b-status').className = 'status ok';
+    d.meals = mealsOf(src).map(function (m) { var c = { kcal: m.kcal }; if (m.protein != null) c.protein = m.protein; return c; });
+    saveBody(); renderBody();
   });
   $('b-recent').addEventListener('click', function (e) {
     var row = e.target.closest('[data-day]'); if (!row) return;
