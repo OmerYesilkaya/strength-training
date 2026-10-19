@@ -262,11 +262,22 @@
   .brow span { text-align: right; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brow span:first-child { text-align: left; color: var(--muted); font-weight: 600; }
   .brow.sel span:first-child { color: var(--accent-ink); }
-  details.profile summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  details.profile summary::-webkit-details-marker { display: none; }
-  details.profile summary .chev { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; transition: transform .15s ease; }
-  details.profile[open] summary .chev { transform: rotate(180deg); }
-  details.profile .pbody { display: flex; flex-direction: column; gap: 8px; }
+  .pbody { display: flex; flex-direction: column; gap: 8px; }
+  /* Segmented control inside a tab: Body has Today / Progress / Profile, History has Training / Body */
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--edge); background: var(--surface); }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-family: var(--display); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 4px; cursor: pointer; min-width: 0; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+  .seg button:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+  /* Four key numbers above the check-in; tapping opens Progress */
+  .strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; cursor: pointer; }
+  .strip:empty { display: none; }
+  .strip .stat { padding: 6px 8px; }
+  .strip .stat b { font-size: 13px; }
+  .strip .stat span { font-size: 10.5px; }
+  .strip .stat.losing b { color: var(--accent-ink); } .strip .stat.mild b { color: var(--warn-ink); } .strip .stat.major b { color: var(--bad-ink); }
+  .brow.plain { cursor: default; }
+  .brow .neg { color: var(--accent-ink); } .brow .pos { color: var(--warn-ink); }
 
   @media (min-width: 560px) {
     .picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
@@ -304,6 +315,13 @@
 
   <!-- Body -->
   <div class="view" id="view-body" hidden>
+    <div class="seg" id="b-seg" role="tablist" data-key="ppl.bodyTab">
+      <button type="button" role="tab" data-pane="b-today" aria-selected="true">Today</button>
+      <button type="button" role="tab" data-pane="b-progress" aria-selected="false">Progress</button>
+      <button type="button" role="tab" data-pane="b-profile-pane" aria-selected="false">Profile</button>
+    </div>
+    <div class="view" id="b-today">
+    <div class="strip" id="b-strip" data-jump="b-progress" title="Open progress"></div>
     <form class="view" id="body-form" autocomplete="off">
       <div class="card">
         <div class="card-head"><div><span class="eyebrow">Morning</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
@@ -328,13 +346,17 @@
         <p class="muted small">Add each meal as you finish it, in round numbers. Dinners you did not cook: guess in hundreds, the same way every time.</p>
       </div>
     </form>
-    <div class="card" id="b-trend"></div>
-    <div class="card" id="b-goal"></div>
-    <div class="card" id="b-intake"></div>
-    <div class="card" id="b-fat"></div>
-    <div class="card" id="b-recent"></div>
-    <details class="card profile" id="b-profile">
-      <summary><div><h2>Profile</h2><p class="muted small" id="b-profile-sum">Set up</p></div><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    </div>
+    <div class="view" id="b-progress" hidden>
+      <div class="card" id="b-trend"></div>
+      <div class="card" id="b-goal"></div>
+      <div class="card" id="b-intake"></div>
+      <div class="card" id="b-fat"></div>
+      <div class="card" id="b-recent"></div>
+    </div>
+    <div class="view" id="b-profile-pane" hidden>
+    <div class="card" id="b-profile">
+      <div class="card-head"><div><span class="eyebrow">Profile</span><h2 id="b-profile-sum">Set up</h2></div></div>
       <div class="pbody">
         <div class="bgrid">
           <div class="field"><label for="p-height">Height <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="100" max="250" id="p-height" data-p="height" placeholder="172"></div>
@@ -346,7 +368,7 @@
         </div>
         <p class="muted small">Maintenance is only a starting guess. Leave it empty to use an estimate from your height, weight, and age; once you have two weeks of weigh-ins and calories, the app measures it from your own data and ignores this.</p>
       </div>
-    </details>
+    </div>
     <section>
       <h2>How the fat comes off</h2>
       <div class="rules">
@@ -356,10 +378,16 @@
         <div class="rule"><b>Protein and steps</b><p>About 1.8 g of protein per kilo a day keeps muscle in a deficit. Walking is the cheapest extra burn there is: 7 000 steps is the floor to aim for.</p></div>
       </div>
     </section>
+    </div>
   </div>
 
   <!-- History -->
   <div class="view" id="view-history" hidden>
+    <div class="seg" id="h-seg" role="tablist" data-key="ppl.histTab">
+      <button type="button" role="tab" data-pane="h-training" aria-selected="true">Training</button>
+      <button type="button" role="tab" data-pane="h-body" aria-selected="false">Body</button>
+    </div>
+    <div class="view" id="h-training">
     <div class="card">
       <div class="cal-nav">
         <button type="button" class="navbtn" id="cal-prev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
@@ -374,13 +402,19 @@
       <svg class="bars" id="bars" viewBox="0 0 360 110" aria-label="Sessions per week, last twelve weeks"></svg>
       <p class="muted" style="font-size:12.5px">Last 12 weeks. The dotted line is the target of six.</p>
     </div>
+    <span id="hist-count" class="muted" style="font-size:14px;font-weight:600"></span>
+    <div id="hist" class="hist"></div>
+    </div>
+    <div class="view" id="h-body" hidden>
+      <div class="card" id="h-weight"></div>
+      <div class="card" id="h-weeks"></div>
+      <div class="card" id="h-tape"></div>
+    </div>
     <div class="toolbar">
-      <span id="hist-count" class="muted" style="font-size:14px;flex:1;font-weight:600"></span>
       <button type="button" class="btn ghost" id="export-json">Export JSON</button>
       <button type="button" class="btn ghost" id="export-csv">Export CSV</button>
       <label class="btn ghost" for="import-file" style="cursor:pointer;display:inline-flex;align-items:center">Import JSON<input type="file" id="import-file" accept="application/json,.json" hidden></label>
     </div>
-    <div id="hist" class="hist"></div>
   </div>
 
   <!-- Program -->
@@ -520,7 +554,7 @@
   // A day's calories and protein are the sum of its meals. Days saved before meals existed carried one `kcal` / `protein` pair; `normalizeDay` folds that into a single meal.
   var body = { v: 1, profile: {}, days: {} };
   var bodyDate = todayISO();   // the day the check-in form edits
-  var chartPts = [];           // plotted trend points, for the tap readout
+  var chartPtsBy = {};         // plotted trend points per chart id, for the tap readout
 
   var $ = function (id) { return document.getElementById(id); };
   var picker = $('picker'), form = $('today'), hist = $('hist'), banner = $('banner'), histCount = $('hist-count');
@@ -897,6 +931,11 @@
   function stat(b, s, small) { return '<div class="stat"><b>' + b + (small ? ' <small>' + small + '</small>' : '') + '</b><span>' + s + '</span></div>'; }
   function renderBodyStats() {
     var st = bodyStats(), p = st.p; var v = verdictOf(st);
+    var today = dayTotals(body.days[todayISO()]); var left = st.target != null && today.kcal != null ? st.target - today.kcal : null;
+    $('b-strip').innerHTML = '<div class="stat"><b>' + (st.kg ? st.kg.toFixed(1) : '—') + '</b><span>kg trend</span></div>' +
+      '<div class="stat ' + (st.rate == null ? '' : (v.cls === 'ok' ? 'losing' : v.cls)) + '"><b>' + (st.rate == null ? '—' : (st.rate > 0 ? '+' : '−') + fmtKgN(Math.abs(st.rate))) + '</b><span>kg a week</span></div>' +
+      '<div class="stat"><b>' + (st.daysLeft != null ? st.daysLeft : (st.daysAtTarget != null ? st.daysAtTarget : '—')) + '</b><span>days left</span></div>' +
+      '<div class="stat ' + (left != null && left < 0 ? 'mild' : '') + '"><b>' + (left == null ? (st.target ? fmtN(st.target) : '—') : fmtN(Math.abs(left))) + '</b><span>' + (left == null ? 'kcal today' : (left < 0 ? 'kcal over' : 'kcal left')) + '</span></div>';
     var side = st.rate == null ? '' : '<div class="side ' + (st.rate < 0 ? 'losing' : 'gaining') + '"><b>' + (st.rate > 0 ? '+' : '−') + fmtKgN(Math.abs(st.rate)) + ' kg/wk</b><span>' + (st.pct > 0 ? '+' : '−') + Math.abs(st.pct).toFixed(1) + ' % a week · aim ' + p.rate + '</span></div>';
     $('b-trend').innerHTML = '<div class="card-head"><div><span class="eyebrow">Trend weight</span><h2>' + (st.kg ? st.kg.toFixed(1) + ' kg' : 'No weight yet') + '</h2></div>' + side + '</div>' +
       '<div class="verdict ' + v.cls + '">' + v.html + '</div>' +
@@ -954,38 +993,82 @@
   }
   function niceStep(raw) { var steps = [0.2, 0.5, 1, 2, 5, 10]; for (var i = 0; i < steps.length; i++) if (steps[i] >= raw) return steps[i]; return 10; }
   function renderChart(st) {
-    var svg = $('b-chart'), read = $('b-read'); chartPts = [];
-    var W = 360, H = 170, L = 34, R = 12, T = 12, B = 22, N = 56;
-    var start = addDays(parseISO(todayISO()), -(N - 1)); var sISO = isoOf(start);
-    var pts = st.ts.filter(function (q) { return q.iso >= sISO; });
-    if (pts.length < 2) { svg.innerHTML = ''; svg.style.display = 'none'; read.textContent = pts.length ? 'Chart appears from the second weigh-in.' : ''; return; }
+    var start = addDays(parseISO(todayISO()), -55); var sISO = isoOf(start);
+    drawWeightChart('b-chart', 'b-read', st.ts.filter(function (q) { return q.iso >= sISO; }), st.goalKg, start, new Date());
+  }
+  // Scale weight as dots, trend as a line, goal dashed when it is near the range. Short spans label the ends, long spans label the months.
+  function drawWeightChart(svgId, readId, pts, goalKg, start, end) {
+    var svg = $(svgId), read = $(readId); chartPtsBy[svgId] = [];
+    var W = 360, H = 170, L = 34, R = 12, T = 12, B = 22;
+    var sISO = isoOf(start), eISO = isoOf(end); var N = Math.max(1, daysBetween(sISO, eISO));
+    if (pts.length < 2) { svg.innerHTML = ''; svg.style.display = 'none'; read.textContent = pts.length ? 'Chart appears from the second weigh-in.' : 'No weigh-ins yet.'; return; }
     svg.style.display = '';
     var lo = Infinity, hi = -Infinity;
     pts.forEach(function (q) { lo = Math.min(lo, q.kg, q.trend); hi = Math.max(hi, q.kg, q.trend); });
-    var goal = st.goalKg != null && st.goalKg > lo - 3 && st.goalKg < hi + 3 ? st.goalKg : null;
+    var goal = goalKg != null && goalKg > lo - 3 && goalKg < hi + 3 ? goalKg : null;
     if (goal != null) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
     lo -= 0.4; hi += 0.4; if (hi - lo < 2) { var mid = (lo + hi) / 2; lo = mid - 1; hi = mid + 1; }
-    var x = function (iso) { return L + daysBetween(sISO, iso) / (N - 1) * (W - L - R); };
+    var x = function (iso) { return L + daysBetween(sISO, iso) / N * (W - L - R); };
     var y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); };
     var step = niceStep((hi - lo) / 3), out = '';
     for (var g = Math.ceil(lo / step) * step; g <= hi; g += step) out += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" stroke="var(--line)" stroke-width="1"/><text x="' + (L - 6) + '" y="' + (y(g) + 3.5).toFixed(1) + '" text-anchor="end">' + (step < 1 ? g.toFixed(1) : g) + '</text>';
     if (goal != null) out += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(goal).toFixed(1) + '" y2="' + y(goal).toFixed(1) + '" stroke="var(--legs)" stroke-width="1.5" stroke-dasharray="4 4"/><text x="' + (L + 4) + '" y="' + (y(goal) - 4).toFixed(1) + '" text-anchor="start" fill="var(--legs)">goal ' + fmtKgN(goal) + '</text>';
-    pts.forEach(function (q) { out += '<circle cx="' + x(q.iso).toFixed(1) + '" cy="' + y(q.kg).toFixed(1) + '" r="3.5" fill="var(--muted)" opacity=".45"/>'; });
+    var r = pts.length > 90 ? 2.5 : 3.5;
+    pts.forEach(function (q) { out += '<circle cx="' + x(q.iso).toFixed(1) + '" cy="' + y(q.kg).toFixed(1) + '" r="' + r + '" fill="var(--muted)" opacity=".45"/>'; });
     var trendPath = pts.map(function (q, i) { return (i ? 'L' : 'M') + x(q.iso).toFixed(1) + ' ' + y(q.trend).toFixed(1); }).join(' ');
     // Lime on white is faint, so the trend line sits on a dark halo (invisible on the black background).
     out += '<path d="' + trendPath + '" fill="none" stroke="var(--edge)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>';
     out += '<path d="' + trendPath + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
     var lp = pts[pts.length - 1];
-    out += '<circle id="b-dot" cx="' + x(lp.iso).toFixed(1) + '" cy="' + y(lp.trend).toFixed(1) + '" r="4.5" fill="var(--accent)" stroke="var(--edge)" stroke-width="1.5"/>';
-    out += '<text x="' + L + '" y="' + (H - 6) + '" text-anchor="start">' + esc(start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">today</text>';
-    svg.innerHTML = out;
-    chartPts = pts.map(function (q) { return { iso: q.iso, kg: q.kg, trend: q.trend, x: x(q.iso), y: y(q.trend) }; });
-    showReading(chartPts.length - 1);
+    out += '<circle id="' + svgId + '-dot" cx="' + x(lp.iso).toFixed(1) + '" cy="' + y(lp.trend).toFixed(1) + '" r="4.5" fill="var(--accent)" stroke="var(--edge)" stroke-width="1.5"/>';
+    if (N > 75) {
+      for (var m = new Date(start.getFullYear(), start.getMonth() + 1, 1); m <= end; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
+        var mx = x(isoOf(m)); if (mx < L + 14 || mx > W - R - 14) continue;
+        out += '<line x1="' + mx.toFixed(1) + '" x2="' + mx.toFixed(1) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/><text x="' + mx.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(m.toLocaleDateString('en-GB', { month: 'short' })) + '</text>';
+      }
+    } else out += '<text x="' + L + '" y="' + (H - 6) + '" text-anchor="start">' + esc(start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">today</text>';
+    svg.innerHTML = out; svg.setAttribute('data-read', readId);
+    chartPtsBy[svgId] = pts.map(function (q) { return { iso: q.iso, kg: q.kg, trend: q.trend, x: x(q.iso), y: y(q.trend) }; });
+    showReading(svgId, chartPtsBy[svgId].length - 1);
   }
-  function showReading(i) {
-    var q = chartPts[i]; if (!q) return;
-    $('b-read').innerHTML = esc(fmtDate(q.iso)) + ' · scale <b>' + q.kg.toFixed(1) + '</b> · trend <b>' + q.trend.toFixed(1) + '</b> kg';
-    var dot = $('b-dot'); if (dot) { dot.setAttribute('cx', q.x.toFixed(1)); dot.setAttribute('cy', q.y.toFixed(1)); }
+  function showReading(svgId, i) {
+    var q = (chartPtsBy[svgId] || [])[i]; if (!q) return;
+    $($(svgId).getAttribute('data-read')).innerHTML = esc(fmtDate(q.iso)) + ' · scale <b>' + q.kg.toFixed(1) + '</b> · trend <b>' + q.trend.toFixed(1) + '</b> kg';
+    var dot = $(svgId + '-dot'); if (dot) { dot.setAttribute('cx', q.x.toFixed(1)); dot.setAttribute('cy', q.y.toFixed(1)); }
+  }
+  // History › Body: the whole weight record, a weekly table, and every tape measurement.
+  function renderHistoryBody() {
+    var st = bodyStats(), p = st.p, ts = st.ts, days = bodyDays();
+    var side = ts.length > 1 ? '<div class="side ' + (st.kg < st.startKg ? 'losing' : 'gaining') + '"><b>' + (st.kg < st.startKg ? '−' : '+') + fmtKgN(Math.abs(st.kg - st.startKg)) + ' kg</b><span>since ' + esc(fmtDate(ts[0].iso)) + '</span></div>' : '';
+    $('h-weight').innerHTML = '<div class="card-head"><div><span class="eyebrow">Weight</span><h2>' + (ts.length ? st.kg.toFixed(1) + ' kg trend' : 'No weigh-ins yet') + '</h2></div>' + side + '</div>' +
+      '<svg class="chart" id="h-chart" viewBox="0 0 360 170" aria-label="Scale weight and trend, all time"></svg><div class="chart-read" id="h-read"></div>';
+    if (ts.length) { var start = parseISO(ts[0].iso); var minStart = addDays(new Date(), -55); drawWeightChart('h-chart', 'h-read', ts, st.goalKg, start < minStart ? start : minStart, new Date()); }
+    else { $('h-chart').style.display = 'none'; $('h-read').textContent = 'Weigh in on the Body tab and the record builds here.'; }
+    // Weeks, newest first: trend at the last weigh-in of the week, change on the week before, mean intake and steps.
+    var thisMon = startOfWeek(new Date()); var rows = [], prevKg = null;
+    for (var i = 25; i >= 0; i--) {
+      var mon = addDays(thisMon, -7 * i); var a = isoOf(mon), b = isoOf(addDays(mon, 6)); var kgEnd = null, k = 0, kn = 0, sSum = 0, sn = 0;
+      ts.forEach(function (q) { if (q.iso >= a && q.iso <= b) kgEnd = q.trend; });
+      days.forEach(function (d) { if (d.iso < a || d.iso > b) return; if (d.kcal != null) { k += d.kcal; kn++; } if (d.steps != null) { sSum += d.steps; sn++; } });
+      if (kgEnd == null && !kn && !sn) continue;
+      rows.push({ mon: mon, kg: kgEnd, delta: kgEnd != null && prevKg != null ? kgEnd - prevKg : null, kcal: kn ? k / kn : null, kn: kn, steps: sn ? sSum / sn : null });
+      if (kgEnd != null) prevKg = kgEnd;
+    }
+    rows.reverse();
+    var dot = '<span class="muted">·</span>';
+    $('h-weeks').innerHTML = '<div class="card-head"><h2>By week</h2><span class="muted small">last 26 weeks</span></div>' + (rows.length ? '<div class="brows"><div class="brow hdr"><span>Week of</span><span>kg</span><span>Δ</span><span>kcal</span><span>steps</span></div>' +
+      rows.map(function (w) {
+        return '<div class="brow plain"><span>' + esc(w.mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })) + '</span>' + (w.kg == null ? dot : '<span>' + w.kg.toFixed(1) + '</span>') +
+          (w.delta == null ? dot : '<span class="' + (w.delta < -0.05 ? 'neg' : (w.delta > 0.05 ? 'pos' : '')) + '">' + (w.delta > 0 ? '+' : '') + w.delta.toFixed(1) + '</span>') +
+          (w.kcal == null ? dot : '<span title="' + w.kn + ' days logged">' + fmtN(w.kcal) + '</span>') + (w.steps == null ? dot : '<span>' + fmtN(w.steps) + '</span>') + '</div>';
+      }).join('') + '</div>' : '<p class="muted small">Weeks appear once there is a weigh-in, a meal, or a step count in them.</p>');
+    // Tape, newest first, with the body fat and lean mass each measurement implied.
+    var tape = days.filter(function (d) { return d.waist != null && d.neck != null && (p.sex !== 'f' || d.hip != null); }).reverse();
+    $('h-tape').innerHTML = '<div class="card-head"><h2>Tape</h2><span class="muted small">' + (p.height ? 'body fat from waist and neck' : 'add height in the profile for body fat') + '</span></div>' + (tape.length ? '<div class="brows"><div class="brow hdr"><span>Day</span><span>waist</span><span>neck</span><span>fat %</span><span>lean kg</span></div>' +
+      tape.map(function (d) {
+        var bf = navyBf(p, d); var tr = null; ts.forEach(function (q) { if (q.iso <= d.iso) tr = q.trend; });
+        return '<div class="brow plain"><span>' + esc(fmtDate(d.iso)) + '</span><span>' + fmtKgN(d.waist) + '</span><span>' + fmtKgN(d.neck) + '</span>' + (bf == null ? dot : '<span>' + bf.toFixed(1) + '</span>') + (bf == null || tr == null ? dot : '<span>' + fmtKgN(tr * (1 - bf / 100)) + '</span>') + '</div>';
+      }).join('') + '</div>' : '<p class="muted small">No tape measurements yet. Waist and neck go in the morning card on the Body tab.</p>');
   }
   function renderBodyInputs() {
     var d = body.days[bodyDate] || {}; var days = bodyDays(); var p = profile();
@@ -1020,7 +1103,7 @@
     } else html = '<p class="muted small" style="padding-top:2px">Nothing added yet' + (bodyDate === todayISO() ? ' today' : '') + '.</p>';
     $('b-meals').innerHTML = html;
   }
-  function renderBody() { renderBodyInputs(); renderBodyStats(); }
+  function renderBody() { renderBodyInputs(); renderBodyStats(); renderHistoryBody(); }
 
   // ---------- render: program ----------
   function renderProgram() {
@@ -1035,7 +1118,7 @@
   function renderAll() { renderWeek(); renderPicker(); renderToday(); renderCalendar(); renderBars(); renderHistory(); renderBody(); }
 
   // ---------- tabs ----------
-  var TITLES = { log: ['Today', fmtLong(new Date())], body: ['Body', 'Weight, intake, and body fat'], history: ['History', 'Consistency and every session'], program: ['Program', 'Home push / pull / legs'] };
+  var TITLES = { log: ['Today', fmtLong(new Date())], body: ['Body', 'Weight, intake, and body fat'], history: ['History', 'Sessions, weight, and tape'], program: ['Program', 'Home push / pull / legs'] };
   function showTab(name) {
     if (!TITLES[name]) name = 'log';
     ['log', 'body', 'history', 'program'].forEach(function (t) { $('view-' + t).hidden = (t !== name); });
@@ -1152,7 +1235,7 @@
     var v = num(e.target.value); if (!body.days[bodyDate]) body.days[bodyDate] = {};
     if (v == null) delete body.days[bodyDate][f]; else body.days[bodyDate][f] = v;
     cleanDay(bodyDate); saveBody(); e.target.classList.toggle('filled', v != null);
-    flashSaved(); renderBodyStats();
+    flashSaved(); renderBodyStats(); renderHistoryBody();
   });
   bodyForm.addEventListener('click', function (e) {
     var x = e.target.closest('[data-meal]');
@@ -1165,24 +1248,37 @@
   });
   $('b-recent').addEventListener('click', function (e) {
     var row = e.target.closest('[data-day]'); if (!row) return;
-    bodyDate = row.getAttribute('data-day'); renderBody(); window.scrollTo({ top: 0, behavior: 'smooth' }); $('b-kg').focus();
+    bodyDate = row.getAttribute('data-day'); renderBody(); selectPane($('b-seg'), 'b-today'); window.scrollTo(0, 0); $('b-kg').focus();
   });
   $('b-profile').addEventListener('input', function (e) {
     var f = e.target.getAttribute('data-p'); if (!f) return;
     var v = f === 'sex' ? e.target.value : num(e.target.value);
     if (v == null || v === '') delete body.profile[f]; else body.profile[f] = v;
-    saveBody(); renderBodyStats();
+    saveBody(); renderBodyStats(); renderHistoryBody();
     $('p-maintenance').placeholder = (function () { var ts = trendSeries(); var est = mifflin(profile(), ts.length ? ts[ts.length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
   });
   // Tap or drag across the chart to read a day.
-  $('b-trend').addEventListener('pointerdown', chartRead);
-  $('b-trend').addEventListener('pointermove', function (e) { if (e.buttons || e.pointerType === 'mouse') chartRead(e); });
+  document.addEventListener('pointerdown', chartRead);
+  document.addEventListener('pointermove', function (e) { if (e.buttons || e.pointerType === 'mouse') chartRead(e); });
   function chartRead(e) {
-    var svg = e.target.closest('#b-chart'); if (!svg || !chartPts.length) return;
+    var svg = e.target.closest && e.target.closest('svg.chart[data-read]'); if (!svg) return; var pts = chartPtsBy[svg.id]; if (!pts || !pts.length) return;
     var r = svg.getBoundingClientRect(); var px = (e.clientX - r.left) / r.width * 360; var best = 0;
-    chartPts.forEach(function (q, i) { if (Math.abs(q.x - px) < Math.abs(chartPts[best].x - px)) best = i; });
-    showReading(best);
+    pts.forEach(function (q, i) { if (Math.abs(q.x - px) < Math.abs(pts[best].x - px)) best = i; });
+    showReading(svg.id, best);
   }
+  // Segmented controls: one pane visible per .seg, remembered per control.
+  function selectPane(seg, paneId) {
+    var found = false;
+    seg.querySelectorAll('button[data-pane]').forEach(function (b) { var on = b.getAttribute('data-pane') === paneId; if (on) found = true; b.setAttribute('aria-selected', String(on)); $(b.getAttribute('data-pane')).hidden = !on; });
+    if (!found) return selectPane(seg, seg.querySelector('button[data-pane]').getAttribute('data-pane'));
+    try { localStorage.setItem(seg.getAttribute('data-key'), paneId); } catch (x) {}
+  }
+  document.querySelectorAll('.seg').forEach(function (seg) {
+    var saved = null; try { saved = localStorage.getItem(seg.getAttribute('data-key')); } catch (x) {}
+    selectPane(seg, saved || '');
+    seg.addEventListener('click', function (e) { var b = e.target.closest('button[data-pane]'); if (b) { selectPane(seg, b.getAttribute('data-pane')); window.scrollTo(0, 0); } });
+  });
+  $('b-strip').addEventListener('click', function () { selectPane($('b-seg'), 'b-progress'); window.scrollTo(0, 0); });
 
   // ---------- events: history ----------
   hist.addEventListener('click', function (e) {
