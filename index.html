@@ -242,7 +242,8 @@
   .bar { height: 12px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
   .bar i { display: block; height: 100%; min-width: 6px; background: var(--accent); }
   .bar-lbl { display: flex; justify-content: space-between; gap: 10px; font-family: var(--display); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  .side { text-align: right; display: flex; flex-direction: column; }
+  .side { text-align: right; display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; }
+  #steps-form .status { align-self: center; font-size: 13px; }
   .side b { font-family: var(--display); font-size: 15px; font-weight: 800; line-height: 1.15; }
   .side span { font-size: 12.5px; color: var(--muted); }
   .side.losing b { color: var(--accent-ink); } .side.gaining b { color: var(--warn-ink); }
@@ -315,7 +316,7 @@
       <div class="week-foot" id="week-foot"></div>
     </div>
     <div class="picker" id="picker" role="group" aria-label="Choose session"></div>
-    <form id="today" class="card" autocomplete="off"></form>
+    <form id="today" class="card" novalidate autocomplete="off"></form>
   </div>
 
   <!-- Body -->
@@ -327,30 +328,33 @@
     </div>
     <div class="view" id="b-today">
     <div class="strip" id="b-strip" data-jump="b-progress" title="Open progress"></div>
-    <form class="view" id="body-form" autocomplete="off">
-      <div class="card">
-        <div class="card-head"><div><span class="eyebrow">Morning</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
-        <div class="bgrid">
-          <div class="field"><label for="b-kg">Weight <span class="unit">kg</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="20" max="300" id="b-kg" data-f="kg" placeholder="—"></div>
-          <div class="field"><label for="b-waist">Waist <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="40" max="200" id="b-waist" data-f="waist" placeholder="—"></div>
-          <div class="field"><label for="b-neck">Neck <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="20" max="80" id="b-neck" data-f="neck" placeholder="—"></div>
-          <div class="field" id="b-hip-field" hidden><label for="b-hip">Hips <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="50" max="200" id="b-hip" data-f="hip" placeholder="—"></div>
-        </div>
-        <p class="muted small" id="b-status">Weigh after the bathroom and before food. Tape once a week: waist at the navel, neck just below the Adam's apple, snug and relaxed. Saves as you type.</p>
+    <form class="card" id="morning-form" novalidate autocomplete="off">
+      <div class="card-head"><div><span class="eyebrow">Morning</span><h2 id="b-title">Today</h2></div><input type="date" id="b-date" aria-label="Entry date"></div>
+      <div class="bgrid">
+        <div class="field"><label for="b-kg">Weight <span class="unit">kg</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="b-kg" data-f="kg" placeholder="—"></div>
+        <div class="field"><label for="b-waist">Waist <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="b-waist" data-f="waist" placeholder="—"></div>
+        <div class="field"><label for="b-neck">Neck <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="b-neck" data-f="neck" placeholder="—"></div>
+        <div class="field" id="b-hip-field" hidden><label for="b-hip">Hips <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="b-hip" data-f="hip" placeholder="—"></div>
       </div>
-      <div class="card">
-        <div class="card-head"><div><span class="eyebrow">Through the day</span><h2 id="b-title2">Food and steps</h2></div></div>
-        <div class="meal-add">
-          <div class="field"><label for="b-mkcal">Meal <span class="unit">kcal</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="0" max="10000" id="b-mkcal" placeholder="kcal"></div>
-          <div class="field"><label for="b-mprot">Protein <span class="unit">g</span></label><input class="fin" type="number" inputmode="numeric" min="0" max="500" id="b-mprot" placeholder="—"></div>
-          <button type="submit" class="btn" id="b-madd">Add</button>
-        </div>
-        <div id="b-meals" class="meals"></div>
-        <div class="actions"><button type="button" class="btn ghost" id="b-copy" hidden></button></div>
-        <div class="field" style="max-width:200px"><label for="b-steps">Steps <span class="unit">from the phone, end of day</span></label><input class="fin" type="number" inputmode="numeric" step="100" min="0" max="100000" id="b-steps" data-f="steps" placeholder="—"></div>
-        <p class="muted small">Add each meal as you finish it, in round numbers. Dinners you did not cook: guess in hundreds, the same way every time.</p>
-      </div>
+      <div class="actions"><button type="submit" class="btn" id="b-msave">Save</button><span class="status" id="b-status"></span></div>
+      <p class="muted small">Weigh after the bathroom and before food. Tape once a week: waist at the navel, neck just below the Adam's apple, snug and relaxed.</p>
     </form>
+    <div class="card" id="b-day-card">
+      <div class="card-head"><div><span class="eyebrow">Through the day</span><h2 id="b-title2">Food and steps</h2></div></div>
+      <form class="meal-add" id="meal-form" novalidate autocomplete="off">
+        <div class="field"><label for="b-mkcal">Meal <span class="unit">kcal</span></label><input class="fin" type="number" inputmode="numeric" step="any" min="0" id="b-mkcal" placeholder="kcal"></div>
+        <div class="field"><label for="b-mprot">Protein <span class="unit">g</span></label><input class="fin" type="number" inputmode="numeric" step="any" min="0" id="b-mprot" placeholder="—"></div>
+        <button type="submit" class="btn" id="b-madd">Add</button>
+      </form>
+      <div id="b-meals" class="meals"></div>
+      <div class="actions"><button type="button" class="btn ghost" id="b-copy" hidden></button></div>
+      <form class="meal-add" id="steps-form" novalidate autocomplete="off">
+        <div class="field"><label for="b-steps">Steps <span class="unit">from the phone, end of day</span></label><input class="fin" type="number" inputmode="numeric" step="any" min="0" id="b-steps" data-f="steps" placeholder="—"></div>
+        <span class="status" id="b-steps-status"></span>
+        <button type="submit" class="btn" id="b-ssave">Save</button>
+      </form>
+      <p class="muted small">Add each meal as you finish it, in round numbers. Dinners you did not cook: guess in hundreds, the same way every time.</p>
+    </div>
     </div>
     <div class="view" id="b-progress" hidden>
       <div class="card" id="b-trend"></div>
@@ -360,20 +364,21 @@
       <div class="card" id="b-recent"></div>
     </div>
     <div class="view" id="b-profile-pane" hidden>
-    <div class="card" id="b-profile">
+    <form class="card" id="profile-form" novalidate autocomplete="off">
       <div class="card-head"><div><span class="eyebrow">Profile</span><h2 id="b-profile-sum">Set up</h2></div></div>
       <div class="pbody">
         <div class="bgrid">
-          <div class="field"><label for="p-height">Height <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="100" max="250" id="p-height" data-p="height" placeholder="172"></div>
-          <div class="field"><label for="p-birthYear">Birth year</label><input class="fin" type="number" inputmode="numeric" min="1900" max="2100" id="p-birthYear" data-p="birthYear" placeholder="1998"></div>
+          <div class="field"><label for="p-height">Height <span class="unit">cm</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="p-height" data-p="height" placeholder="172"></div>
+          <div class="field"><label for="p-birthYear">Birth year</label><input class="fin" type="number" inputmode="numeric" step="any" min="0" id="p-birthYear" data-p="birthYear" placeholder="1998"></div>
           <div class="field"><label for="p-sex">Sex</label><select class="fin" id="p-sex" data-p="sex"><option value="m">Male</option><option value="f">Female</option></select></div>
-          <div class="field"><label for="p-goalBf">Goal body fat <span class="unit">%</span></label><input class="fin" type="number" inputmode="decimal" step="0.5" min="3" max="60" id="p-goalBf" data-p="goalBf" placeholder="17"></div>
-          <div class="field"><label for="p-rate">Target loss <span class="unit">% of weight a week</span></label><input class="fin" type="number" inputmode="decimal" step="0.1" min="0.1" max="1.5" id="p-rate" data-p="rate" placeholder="0.6"></div>
-          <div class="field"><label for="p-maintenance">Maintenance <span class="unit">kcal, optional</span></label><input class="fin" type="number" inputmode="numeric" step="10" min="800" max="8000" id="p-maintenance" data-p="maintenance" placeholder="—"></div>
+          <div class="field"><label for="p-goalBf">Goal body fat <span class="unit">%</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="p-goalBf" data-p="goalBf" placeholder="17"></div>
+          <div class="field"><label for="p-rate">Target loss <span class="unit">% of weight a week</span></label><input class="fin" type="number" inputmode="decimal" step="any" min="0" id="p-rate" data-p="rate" placeholder="0.6"></div>
+          <div class="field"><label for="p-maintenance">Maintenance <span class="unit">kcal, optional</span></label><input class="fin" type="number" inputmode="numeric" step="any" min="0" id="p-maintenance" data-p="maintenance" placeholder="—"></div>
         </div>
+        <div class="actions"><button type="submit" class="btn" id="p-save">Save</button><span class="status" id="p-status"></span></div>
         <p class="muted small">Maintenance is only a starting guess. Leave it empty to use an estimate from your height, weight, and age; once you have two weeks of weigh-ins and calories, the app measures it from your own data and ignores this.</p>
       </div>
-    </div>
+    </form>
     <section>
       <h2>How the fat comes off</h2>
       <div class="rules">
@@ -790,14 +795,14 @@
       html += '<div class="hdr"><span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">' + unitOf(ex) + '</span></div>';
       (ex.warm ? d.warm || [] : []).forEach(function (w, j) {
         html += '<div class="set warm" data-w="' + j + '"><div class="set-del" aria-hidden="true">Skip</div><div class="set-body"><span class="n">' + warmLabel(ex, j) + '</span>' +
-          '<input type="number" inputmode="decimal" step="0.5" min="0" id="wk' + j + '-' + ex.key + '" data-k="kg" data-w="' + j + '" value="' + esc(w.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Warm-up ' + (j + 1) + ' kg">' +
-          '<input type="number" inputmode="numeric" min="0" max="100" id="wr' + j + '-' + ex.key + '" data-k="reps" data-w="' + j + '" value="' + esc(w.reps) + '" placeholder="reps" aria-label="Warm-up ' + (j + 1) + ' reps"></div></div>';
+          '<input type="number" inputmode="decimal" step="any" min="0" id="wk' + j + '-' + ex.key + '" data-k="kg" data-w="' + j + '" value="' + esc(w.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Warm-up ' + (j + 1) + ' kg">' +
+          '<input type="number" inputmode="numeric" min="0" id="wr' + j + '-' + ex.key + '" data-k="reps" data-w="' + j + '" value="' + esc(w.reps) + '" placeholder="reps" aria-label="Warm-up ' + (j + 1) + ' reps"></div></div>';
       });
       d.sets.forEach(function (st, i) {
         var n = i + 1;
         html += '<div class="set" data-i="' + i + '"><div class="set-del" aria-hidden="true">Delete</div><div class="set-body"><span class="n">Set ' + n + '</span>' +
-          '<input class="' + kgClass(d.suggested || stepDir(ex, d, i)) + '" type="number" inputmode="decimal" step="0.5" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
-          '<input type="number" inputmode="numeric" min="0" max="' + (ex.unit === 's' ? 600 : 100) + '" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="' + unitOf(ex) + '" aria-label="Set ' + n + ' ' + unitOf(ex) + '"></div></div>';
+          '<input class="' + kgClass(d.suggested || stepDir(ex, d, i)) + '" type="number" inputmode="decimal" step="any" min="0" id="k' + n + '-' + ex.key + '" data-k="kg" data-i="' + i + '" value="' + esc(st.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Set ' + n + ' kg">' +
+          '<input type="number" inputmode="numeric" min="0" id="r' + n + '-' + ex.key + '" data-k="reps" data-i="' + i + '" value="' + esc(st.reps) + '" placeholder="' + unitOf(ex) + '" aria-label="Set ' + n + ' ' + unitOf(ex) + '"></div></div>';
       });
       if (d.sets.length < 4) html += '<button type="button" class="addset" data-add="' + ex.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add set</button>';
       html += '</div></div>';
@@ -1007,9 +1012,9 @@
     var p = st.p; var head, side = '', sub, bar = '', pill = '';
     if (st.goalKg == null) { head = 'No finish line yet'; sub = (p.height ? '' : 'Add your height in the profile and m') + (p.height ? 'M' : '') + 'easure waist and neck once, and the goal weight for ' + p.goalBf + ' % appears here.'; }
     else if (st.toGo <= 0) { head = 'You are there'; sub = 'Trend weight ' + st.kg.toFixed(1) + ' kg is at or under ' + fmtKgN(st.goalKg) + ' kg, the weight ' + p.goalBf + ' % body fat implies. Re-measure the tape and set a new goal if you want one.'; }
-    else if (st.rate == null) { head = st.daysAtTarget + ' days at target pace'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>if you hold ' + p.rate + ' % a week</span></div>'; sub = fmtKgN(st.toGo) + ' kg to ' + fmtKgN(st.goalKg) + ' kg. After two weeks of weigh-ins the countdown switches to your real pace.'; }
+    else if (st.rate == null) { head = st.daysAtTarget + ' days'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>at the target pace, ' + p.rate + ' % a week</span></div>'; sub = fmtKgN(st.toGo) + ' kg to ' + fmtKgN(st.goalKg) + ' kg. After two weeks of weigh-ins the countdown switches to your real pace.'; }
     else if (st.rate >= 0) {
-      head = 'Not moving toward it'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>if you hold ' + p.rate + ' % a week</span></div>';
+      head = 'Not moving'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>at the target pace, ' + p.rate + ' % a week</span></div>';
       pill = '<div class="pace major">' + fmtKgN(st.toGo) + ' kg to go and the trend is ' + (st.pct > RATE_BAND ? 'going up' : 'flat') + ' this fortnight. ' + (st.weekLogged ? 'Eat less than the intake card says' : 'Start logging meals') + ' and get the steps in.</div>';
       sub = 'The finish date only counts down while the trend falls. Fix the pace first.';
     }
@@ -1124,6 +1129,7 @@
     copy.setAttribute('data-src', src ? src.iso : '');
     if (src) copy.textContent = 'Same as ' + (daysBetween(src.iso, bodyDate) === 1 ? 'yesterday' : fmtDate(src.iso)) + ': ' + fmtN(src.kcal) + ' kcal';
     $('b-mkcal').value = ''; $('b-mprot').value = '';
+    setSaved('b-steps-status', '');
     PROFILE_FIELDS.forEach(function (f) { var inp = $('p-' + f); var v = body.profile[f]; inp.value = v == null ? (f === 'sex' ? 'm' : '') : v; });
     $('p-maintenance').placeholder = (function () { var est = mifflin(p, trendSeries().length ? trendSeries()[trendSeries().length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
     $('b-hip-field').hidden = p.sex !== 'f';
@@ -1258,29 +1264,41 @@
   });
 
   // ---------- events: body ----------
-  var bodyForm = $('body-form');
-  function flashSaved() { var el = $('b-status'); el.textContent = 'Saved.'; el.className = 'muted small ok'; }
-  // Enter in any field, or the Add button, adds the meal typed in the adder.
-  bodyForm.addEventListener('submit', function (e) {
+  // Each card saves on its own button (or Enter). Forms are `novalidate`, so nothing is refused: any number goes.
+  function setSaved(id, msg, cls) { var el = $(id); el.textContent = msg; el.className = 'status' + (cls ? ' ' + cls : ''); }
+  function blurActive() { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+  // Write the data-f fields inside `root` into the day being edited.
+  function saveDayFields(root) {
+    var d = body.days[bodyDate] || (body.days[bodyDate] = {}); var saved = [];
+    root.querySelectorAll('input[data-f]').forEach(function (inp) {
+      var f = inp.getAttribute('data-f'); var v = num(inp.value);
+      if (v == null) delete d[f]; else { d[f] = v; saved.push(f === 'kg' ? v + ' kg' : f === 'steps' ? fmtN(v) + ' steps' : f + ' ' + v); }
+    });
+    cleanDay(bodyDate); saveBody(); return saved;
+  }
+  $('morning-form').addEventListener('submit', function (e) {
+    e.preventDefault(); var saved = saveDayFields(e.target); renderBody(); blurActive();
+    setSaved('b-status', saved.length ? 'Saved ' + saved.join(', ') + '.' : 'Cleared.', 'ok');
+  });
+  $('morning-form').addEventListener('input', function (e) { if (e.target.hasAttribute('data-f')) setSaved('b-status', 'Not saved yet.'); });
+  $('morning-form').addEventListener('change', function (e) {
+    if (e.target.id !== 'b-date') return;
+    bodyDate = e.target.value || todayISO(); renderBody(); setSaved('b-status', '');
+  });
+  $('steps-form').addEventListener('submit', function (e) {
+    e.preventDefault(); var saved = saveDayFields(e.target); renderBody(); blurActive(); setSaved('b-steps-status', saved.length ? 'Saved.' : 'Cleared.', 'ok');
+  });
+  $('steps-form').addEventListener('input', function () { setSaved('b-steps-status', 'Not saved.'); });
+  // Enter in either field, or the Add button, adds the meal typed in the adder.
+  $('meal-form').addEventListener('submit', function (e) {
     e.preventDefault();
     var kcal = num($('b-mkcal').value); if (kcal == null) { $('b-mkcal').focus(); return; }
     var d = body.days[bodyDate] || (body.days[bodyDate] = {}); var m = { kcal: kcal }; var pr = num($('b-mprot').value); if (pr != null) m.protein = pr;
     if (bodyDate === todayISO()) m.at = nowHM();
     d.meals = mealsOf(d).concat([m]); saveBody();
-    renderBody(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    renderBody(); blurActive();
   });
-  bodyForm.addEventListener('change', function (e) {
-    if (e.target.id !== 'b-date') return;
-    bodyDate = e.target.value || todayISO(); renderBody();
-  });
-  bodyForm.addEventListener('input', function (e) {
-    var f = e.target.getAttribute('data-f'); if (!f) return;
-    var v = num(e.target.value); if (!body.days[bodyDate]) body.days[bodyDate] = {};
-    if (v == null) delete body.days[bodyDate][f]; else body.days[bodyDate][f] = v;
-    cleanDay(bodyDate); saveBody(); e.target.classList.toggle('filled', v != null);
-    flashSaved(); renderBodyStats(); renderHistoryBody();
-  });
-  bodyForm.addEventListener('click', function (e) {
+  $('b-day-card').addEventListener('click', function (e) {
     var x = e.target.closest('[data-meal]');
     if (x) { var dd = body.days[bodyDate]; if (!dd) return; dd.meals = mealsOf(dd).filter(function (_, i) { return i !== +x.getAttribute('data-meal'); }); cleanDay(bodyDate); saveBody(); renderBody(); return; }
     if (e.target.id !== 'b-copy') return;
@@ -1293,13 +1311,15 @@
     var row = e.target.closest('[data-day]'); if (!row) return;
     bodyDate = row.getAttribute('data-day'); renderBody(); selectPane($('b-seg'), 'b-today'); window.scrollTo(0, 0); $('b-kg').focus();
   });
-  $('b-profile').addEventListener('input', function (e) {
-    var f = e.target.getAttribute('data-p'); if (!f) return;
-    var v = f === 'sex' ? e.target.value : num(e.target.value);
-    if (v == null || v === '') delete body.profile[f]; else body.profile[f] = v;
-    saveBody(); renderBodyStats(); renderHistoryBody();
-    $('p-maintenance').placeholder = (function () { var ts = trendSeries(); var est = mifflin(profile(), ts.length ? ts[ts.length - 1].trend : null); return est ? 'est. ' + est : '—'; })();
+  $('profile-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    PROFILE_FIELDS.forEach(function (f) {
+      var el = $('p-' + f); var v = f === 'sex' ? el.value : num(el.value);
+      if (v == null || v === '') delete body.profile[f]; else body.profile[f] = v;
+    });
+    saveBody(); renderBody(); blurActive(); setSaved('p-status', 'Saved.', 'ok');
   });
+  $('profile-form').addEventListener('input', function () { setSaved('p-status', 'Not saved yet.'); });
   // Tap or drag across the chart to read a day.
   document.addEventListener('pointerdown', chartRead);
   document.addEventListener('pointermove', function (e) { if (e.buttons || e.pointerType === 'mouse') chartRead(e); });
