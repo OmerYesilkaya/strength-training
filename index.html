@@ -139,6 +139,8 @@
   .sets .n { font-family: var(--display); font-size: 9.5px; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; }
   .sets input { width: 100%; min-width: 0; font: inherit; font-family: var(--display); font-size: 15px; font-weight: 600; text-align: center; padding: 7px 2px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; min-height: 36px; }
   .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .set.warm .n { color: var(--accent-ink); }
+  .set.warm input { border-style: dashed; border-color: var(--accent-ink); background: transparent; color: var(--muted); }
   .sets input.suggested { border-color: var(--accent-ink); background: var(--accent-soft); color: var(--accent-ink); }
   .sets input.suggested.down { border-color: var(--warn-ink); background: var(--warn-soft); color: var(--warn-ink); }
   .addset { align-self: stretch; justify-content: center; appearance: none; border: 1px dashed var(--muted); background: transparent; color: var(--muted); min-height: 30px; padding: 0 10px 0 8px; margin: 0; display: inline-flex; align-items: center; gap: 5px; font: inherit; font-family: var(--display); font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
@@ -187,6 +189,7 @@
   .lines { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; font-size: 14px; }
   .lines .l { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lines .r { font-weight: 700; white-space: nowrap; }
+  .lines .warm { font-size: 12.5px; color: var(--muted); font-weight: 600; }
   .entry-notes { font-size: 13.5px; color: var(--muted); }
   .entry-foot { display: flex; justify-content: flex-end; gap: 6px; align-items: center; }
   .empty { padding: 16px; border: 1px dashed var(--muted); color: var(--muted); font-size: 14px; text-align: center; }
@@ -431,7 +434,7 @@
       <h2>How every set is done</h2>
       <div class="rules">
         <div class="rule"><b>Two working sets</b><p>Set 1 stops with 1 rep in reserve. Set 2 goes to concentric failure: you cannot complete another rep with good form. Stop before form breaks down, not after.</p></div>
-        <div class="rule"><b>Warm up once</b><p>Only the first compound of the session gets warm-up sets: about 50% for 8 reps, then 75% for 4. Everything after that is already warm.</p></div>
+        <div class="rule"><b>Warm up once</b><p>Only the first compound of the session gets warm-up sets: about 50% for 8 reps, then 75% for 4. The log pre-fills them from set 1 as the dashed rows. Everything after that is already warm.</p></div>
         <div class="rule"><b>Slow, controlled reps</b><p>One second up, two to three seconds down, no bounce. This is what makes two sets enough, and what makes 40&nbsp;kg dumbbells enough.</p></div>
         <div class="rule"><b>Rest fully</b><p>Two to three minutes between compound sets, about 90 seconds on isolation work. If a session runs past 35 minutes, you are resting too long or adding exercises.</p></div>
       </div>
@@ -669,11 +672,19 @@
     }
     return keep;
   }
+  // Warm-up sets for the session's first compound: 50 % × 8 and 75 % × 4 of set 1, rounded to the dumbbell step; two
+  // light bodyweight sets when the exercise is loaded by backpack. They follow set 1's kg until the user edits them.
+  var WARM = [{ f: 0.5, reps: '8', bwReps: '5' }, { f: 0.75, reps: '4', bwReps: '3' }];
+  function warmKgFor(ex, kg, f) { var n = num(kg); if (ex.load === 'bw') return '0'; return n == null ? '' : String(Math.max(0, Math.round(n * f / STEP) * STEP)); }
+  function warmSets(ex, kg) { return WARM.map(function (w) { return { kg: warmKgFor(ex, kg, w.f), reps: ex.load === 'bw' ? w.bwReps : w.reps, auto: true }; }); }
+  function syncWarm(ex, d) { (d.warm || []).forEach(function (w, j) { if (w.auto) w.kg = warmKgFor(ex, d.sets[0].kg, WARM[j].f); }); }
+  function warmLabel(ex, j) { return ex.load === 'bw' ? 'Warm' : Math.round(WARM[j].f * 100) + ' %'; }
   function ensureDraft() {
     var s = PROGRAM[selected];
     if (!draft || draft.v !== 2 || draft.session !== s.key) draft = { v: 2, session: s.key, date: todayISO(), ex: {}, notes: '' };
     s.ex.forEach(function (ex) {
       if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '' }, { kg: kg, reps: '' }], suggested: sg.dir }; }
+      var d = draft.ex[ex.key]; if (ex.warm && !d.warm) d.warm = warmSets(ex, d.sets[0].kg);
     });
   }
   function draftTouched() {
@@ -712,6 +723,7 @@
   }
   function kgClass(dir) { return 'kg' + (dir ? ' suggested' : '') + (dir === 'down' ? ' down' : ''); }
   function syncRow(row, ex, d) {
+    (d.warm || []).forEach(function (w, j) { var inp = row.querySelector('input[data-k="kg"][data-w="' + j + '"]'); if (inp && inp.value !== w.kg) inp.value = w.kg; });
     d.sets.forEach(function (st, j) {
       var inp = row.querySelector('input[data-k="kg"][data-i="' + j + '"]'); if (!inp) return;
       if (inp.value !== st.kg) inp.value = st.kg;
@@ -754,9 +766,14 @@
       '<input type="date" id="date" aria-label="Session date" value="' + esc(draft.date) + '"></div><div class="exlist">';
     s.ex.forEach(function (ex) {
       var d = draft.ex[ex.key]; var sg = suggest(ex);
-      html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div>' +
+      html += '<div class="ex" data-ex="' + ex.key + '"><div class="ex-info"><div class="ex-name">' + esc(ex.name) + '</div>' +
         '<div class="ex-target">' + targetOf(ex) + '</div><div class="ex-hint' + (sg.dir ? ' ' + sg.dir : '') + '">' + esc(sg.hint) + '</div></div><div class="sets">';
       html += '<div class="hdr"><span></span><span class="h">' + (ex.load === 'bw' ? '+kg' : 'kg') + '</span><span class="h">' + unitOf(ex) + '</span></div>';
+      (ex.warm ? d.warm || [] : []).forEach(function (w, j) {
+        html += '<div class="set warm" data-w="' + j + '"><div class="set-del" aria-hidden="true">Skip</div><div class="set-body"><span class="n">' + warmLabel(ex, j) + '</span>' +
+          '<input type="number" inputmode="decimal" step="0.5" min="0" id="wk' + j + '-' + ex.key + '" data-k="kg" data-w="' + j + '" value="' + esc(w.kg) + '" placeholder="' + (ex.load === 'bw' ? '0' : '—') + '" aria-label="Warm-up ' + (j + 1) + ' kg">' +
+          '<input type="number" inputmode="numeric" min="0" max="100" id="wr' + j + '-' + ex.key + '" data-k="reps" data-w="' + j + '" value="' + esc(w.reps) + '" placeholder="reps" aria-label="Warm-up ' + (j + 1) + ' reps"></div></div>';
+      });
       d.sets.forEach(function (st, i) {
         var n = i + 1;
         html += '<div class="set" data-i="' + i + '"><div class="set-del" aria-hidden="true">Delete</div><div class="set-body"><span class="n">Set ' + n + '</span>' +
@@ -820,7 +837,8 @@
       var s = sessionByKey(h.session);
       var lines = (h.exercises || []).map(function (e) {
         var ex = exInSession(s, e.key) || { name: e.name, load: e.load };
-        return '<div class="l">' + esc(e.name || ex.name) + '</div><div class="r">' + esc(fmtSets(ex, e.sets)) + '</div>';
+        return '<div class="l">' + esc(e.name || ex.name) + '</div><div class="r">' + esc(fmtSets(ex, e.sets)) + '</div>' +
+          (e.warm && e.warm.length ? '<div class="l warm">warm-up</div><div class="r warm">' + esc(fmtSets(ex, e.warm)) + '</div>' : '');
       }).join('');
       var armed = deleteArmed === h.id;
       return '<div class="entry"><div class="entry-head"><span class="chip ' + typeOf(h.session) + '">' + esc(h.sessionName || (s ? s.name : h.session)) + '</span><span class="date">' + esc(fmtDate(h.date)) + '</span></div><div class="lines">' + lines + '</div>' +
@@ -1110,7 +1128,7 @@
     $('program-sessions').innerHTML = PROGRAM.map(function (s, i) {
       return '<div class="psession"><div class="psession-head"><div><span class="eyebrow">Day ' + (i + 1) + ' · ' + esc(s.focus) + '</span><h3>' + esc(s.name) + '</h3></div><span class="chip ' + s.type + '">' + esc(s.type) + '</span></div><div>' +
         s.ex.map(function (ex) {
-          return '<div class="prow"><div class="n">' + esc(ex.name) + (ex.warm ? '<span class="tag">warm up</span>' : '') + '</div><div class="sr">' + targetOf(ex) + '</div>' + (ex.note ? '<div class="note">' + esc(ex.note) + '</div>' : '') + '</div>';
+          return '<div class="prow"><div class="n">' + esc(ex.name) + '</div><div class="sr">' + targetOf(ex) + '</div>' + (ex.note ? '<div class="note">' + esc(ex.note) + '</div>' : '') + '</div>';
         }).join('') + '</div></div>';
     }).join('');
   }
@@ -1144,8 +1162,9 @@
     if (t.id === 'notes') { draft.notes = t.value; saveDraft(); return; }
     var row = t.closest('.ex'); if (!row) return;
     var key = row.getAttribute('data-ex'); var ex = exInSession(PROGRAM[selected], key); var d = draft.ex[key];
-    var i = +t.getAttribute('data-i'); var k = t.getAttribute('data-k');
-    if (k === 'kg') { setKg(d, i, t.value); d.suggested = false; }
+    var i = +t.getAttribute('data-i'); var k = t.getAttribute('data-k'); var wi = t.getAttribute('data-w');
+    if (wi != null) { var w = d.warm[+wi]; if (!w) return; w[k] = t.value; if (k === 'kg') w.auto = false; saveDraft(); return; }
+    if (k === 'kg') { setKg(d, i, t.value); d.suggested = false; if (i === 0) syncWarm(ex, d); }
     else if (k === 'reps') d.sets[i].reps = t.value;
     else return;
     applySteps(ex, d, i); syncRow(row, ex, d); saveDraft();
@@ -1155,7 +1174,9 @@
   var swipe = null;
   function removeSet(row) {
     var exRow = row.closest('.ex'); var key = exRow.getAttribute('data-ex'); var ex = exInSession(PROGRAM[selected], key); var d = draft.ex[key]; var i = +row.getAttribute('data-i');
-    d.sets.splice(i, 1); applySteps(ex, d, Math.max(0, i - 1)); saveDraft();
+    if (row.hasAttribute('data-w')) d.warm.splice(+row.getAttribute('data-w'), 1);
+    else { d.sets.splice(i, 1); applySteps(ex, d, Math.max(0, i - 1)); }
+    saveDraft();
     row.classList.add('leaving'); row.querySelector('.set-body').style.transform = 'translateX(-110%)';
     setTimeout(renderToday, 160);
   }
@@ -1175,7 +1196,7 @@
       if (document.activeElement && document.activeElement.tagName === 'INPUT') document.activeElement.blur();
     }
     e.preventDefault();
-    var canDelete = draft.ex[swipe.row.closest('.ex').getAttribute('data-ex')].sets.length > 1;
+    var canDelete = swipe.row.hasAttribute('data-w') || draft.ex[swipe.row.closest('.ex').getAttribute('data-ex')].sets.length > 1;
     swipe.dx = Math.min(0, canDelete ? dx : dx / 4);
     swipe.body.style.transform = 'translateX(' + swipe.dx + 'px)';
     swipe.row.classList.toggle('armed', canDelete && -swipe.dx > SWIPE_DELETE);
@@ -1204,7 +1225,10 @@
       var d = draft.ex[ex.key]; var sets = [];
       d.sets.forEach(function (st) { var reps = num(st.reps); if (reps == null) return; var kg = num(st.kg); if (ex.load === 'bw' && kg == null) kg = 0; sets.push({ kg: kg, reps: reps }); });
       if (!sets.length) return;
-      exercises.push({ key: ex.key, name: ex.name, load: ex.load || 'db', sets: sets });
+      var e = { key: ex.key, name: ex.name, load: ex.load || 'db', sets: sets }; var warm = [];
+      (d.warm || []).forEach(function (w) { var reps = num(w.reps); if (reps == null) return; var kg = num(w.kg); if (ex.load === 'bw' && kg == null) kg = 0; warm.push({ kg: kg, reps: reps }); });
+      if (warm.length) e.warm = warm;
+      exercises.push(e);
     });
     if (!exercises.length) { setStatus('Enter reps for at least one exercise.', 'bad'); return; }
     history.unshift({ id: uid(), date: draft.date || todayISO(), session: s.key, sessionName: s.name, exercises: exercises, notes: (draft.notes || '').trim(), finishedAt: new Date().toISOString() });
@@ -1299,10 +1323,11 @@
   }
   $('export-json').addEventListener('click', function () { download('ppl-log-' + todayISO() + '.json', JSON.stringify({ exported: new Date().toISOString(), sessions: history, body: body }, null, 2), 'application/json'); });
   $('export-csv').addEventListener('click', function () {
-    var rows = [['date', 'session', 'exercise', 'set1_kg', 'set1_reps', 'set2_kg', 'set2_reps', 'set3_kg', 'set3_reps', 'set4_kg', 'set4_reps', 'notes']];
+    var rows = [['date', 'session', 'exercise', 'set1_kg', 'set1_reps', 'set2_kg', 'set2_reps', 'set3_kg', 'set3_reps', 'set4_kg', 'set4_reps', 'warm1_kg', 'warm1_reps', 'warm2_kg', 'warm2_reps', 'notes']];
     history.slice().reverse().forEach(function (h) { (h.exercises || []).forEach(function (e) {
       var row = [h.date, h.sessionName, e.name];
       for (var i = 0; i < 4; i++) { var st = e.sets[i]; row.push(st && st.kg != null ? st.kg : '', st && st.reps != null ? st.reps : ''); }
+      for (var j = 0; j < 2; j++) { var w = (e.warm || [])[j]; row.push(w && w.kg != null ? w.kg : '', w && w.reps != null ? w.reps : ''); }
       row.push(h.notes || ''); rows.push(row);
     }); });
     download('ppl-log-' + todayISO() + '.csv', rows.map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\n'), 'text/csv');
