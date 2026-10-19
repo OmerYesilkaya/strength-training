@@ -15,7 +15,7 @@ Omer's personal home training program and the small web app that logs it. Phone 
 - Mike Mentzer style: low volume, high intensity. Two hard working sets per exercise (set 1 with one rep in reserve, set 2 to failure). Short sessions, high frequency, six sessions a week is the target.
 - Six-session rotation: Push A, Pull A, Legs A, Push B, Pull B, Legs B. Legs are kept healthy and lean, not maximised.
 - **Double progression, decided by set 1 only.** Set 2 to failure is noisy and never triggers anything.
-  - Set 1 reaches the top of the rep range: next time suggests +2 kg (`STEP`), highlighted indigo.
+  - Set 1 reaches the top of the rep range: next time suggests +2 kg (`STEP`), highlighted lime.
   - Set 1 lands under the bottom once: keep the weight. Hint says a second miss steps down.
   - Set 1 lands under the bottom two sessions in a row at the same weight: next time suggests −2 kg, highlighted amber. Never below zero; at bodyweight the hint suggests an easier variation instead.
 - **Within a session** the same rule runs between sets: a set at the top of the range pre-fills the next set +2 kg, a set under the bottom pre-fills it −2 kg. Only sets with no reps typed yet, that still mirror the previous set, follow; a kg the user typed is never overwritten.
@@ -32,7 +32,7 @@ Omer's personal home training program and the small web app that logs it. Phone 
 
 ## Code map (`index.html`)
 
-- Design tokens on `:root` with a dark block under `prefers-color-scheme: dark`. Indigo accent, white rounded cards on a soft grey-blue page, Plus Jakarta Sans. Session types colour the UI: push indigo, pull coral, legs green. Step-up uses the accent tokens, step-down the `--warn-*` tokens, delete the `--bad-*` tokens.
+- Design tokens on `:root` with a dark block under `prefers-color-scheme: dark`. Black and white with a lime accent (`--accent` #c6ff00, `--accent-ink` is a darker green for text on white), square corners everywhere, 1 px `--edge` borders instead of shadows, tight spacing. Two fonts: Orbitron (`--display`) for titles, labels, buttons and numbers, Rajdhani (`--font`) for running text. Session types stay monochrome plus lime: push lime, pull ink (inverted), legs grey, each with `--on-*` text tokens. Step-up uses the accent tokens, step-down the `--warn-*` tokens, delete the `--bad-*` tokens.
 - `PROGRAM` constant: six sessions, each `{ key, type, name, focus, ex: [{ key, name, reps: [lo, hi], warm?, load?: 'bw', per?, unit?: 's', note? }] }`. `unit: 's'` marks a timed exercise (farmer's carry): the reps field and stored `reps` hold seconds, and the progression rule works on them unchanged. **Exercise `key`s are shared across sessions and link history and suggestions. Never rename a key; rename `name` instead.** Program changes are made here by hand; Omer tells the agent, the agent edits and pushes.
 - Constants: `STEP` (2 kg), `SWIPE_DELETE` (88 px), `TARGET_PER_WEEK` (6), body constants listed above, storage keys `ppl.sessions`, `ppl.draft`, `ppl.tab`, `ppl.body`.
 - State: `history` (sessions, newest first), `selected` session index, `autoSelected` (follows "up next" until the user picks), `draft` (the session being entered), `deleteArmed`, `calMonth`, `body` (profile and days), `bodyDate` (the day the check-in form edits).
