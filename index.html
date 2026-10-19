@@ -234,12 +234,17 @@
   .meal-total { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid var(--ink); font-size: 14px; font-weight: 700; }
   .meal-total span { color: var(--muted); font-weight: 600; }
   .meal-total.over b { color: var(--warn-ink); }
+  .bar { height: 12px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; min-width: 6px; background: var(--accent); }
+  .bar-lbl { display: flex; justify-content: space-between; gap: 10px; font-family: var(--display); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
   .side { text-align: right; display: flex; flex-direction: column; }
   .side b { font-family: var(--display); font-size: 15px; font-weight: 800; line-height: 1.15; }
   .side span { font-size: 12.5px; color: var(--muted); }
   .side.losing b { color: var(--accent-ink); } .side.gaining b { color: var(--warn-ink); }
   .verdict { padding: 8px 10px; font-size: 14.5px; background: var(--surface-2); color: var(--ink); border-left: 3px solid var(--muted); }
-  .verdict.ok { background: var(--accent-soft); border-left-color: var(--accent-ink); } .verdict.slow, .verdict.fast { background: var(--warn-soft); color: var(--warn-ink); border-left-color: var(--warn-ink); }
+  .verdict.ok { background: var(--accent-soft); border-left-color: var(--accent-ink); } .verdict.mild { background: var(--warn-soft); color: var(--warn-ink); border-left-color: var(--warn-ink); } .verdict.major { background: var(--bad-soft); color: var(--bad-ink); border-left-color: var(--bad-ink); }
+  .pace { font-size: 14px; font-weight: 700; padding: 7px 10px; background: var(--accent-soft); color: var(--ink); border-left: 3px solid var(--accent-ink); }
+  .pace.mild { background: var(--warn-soft); color: var(--warn-ink); border-left-color: var(--warn-ink); } .pace.major { background: var(--bad-soft); color: var(--bad-ink); border-left-color: var(--bad-ink); }
   .verdict b { font-weight: 700; }
   .chart { width: 100%; height: auto; aspect-ratio: 360 / 160; display: block; touch-action: pan-y; }
   .chart text { font-family: var(--display); font-size: 8px; font-weight: 600; fill: var(--muted); }
@@ -324,6 +329,7 @@
       </div>
     </form>
     <div class="card" id="b-trend"></div>
+    <div class="card" id="b-goal"></div>
     <div class="card" id="b-intake"></div>
     <div class="card" id="b-fat"></div>
     <div class="card" id="b-recent"></div>
@@ -456,6 +462,7 @@
   var TREND_ALPHA = 0.2;    // exponential smoothing per day of scale weight
   var RATE_SPAN = 14;       // days between the two trend points that give the weekly rate
   var RATE_BAND = 0.25;     // %/week either side of the target that still counts as on target
+  var RATE_MAJOR = 0.6;     // %/week off the target where the warning turns from mild to major
   var PROTEIN_PER_KG = 1.8, STEP_TARGET = 7000;
 
   // The program. Keep each exercise's `key` stable when renaming or changing reps, so its history keeps linking.
@@ -579,6 +586,7 @@
   function startOfWeek(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var dow = (x.getDay() + 6) % 7; return addDays(x, -dow); } // Monday
   function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
   function fmtDate(iso) { if (!iso) return ''; return parseISO(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); }
+  function shortDate(d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); }
   function fmtLong(d) { return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
 
   // ---------- helpers ----------
@@ -862,22 +870,29 @@
     // Body fat and the weight that goal body fat implies, keeping today's lean mass.
     st.measure = lastMeasure(p); st.bf = navyBf(p, st.measure);
     if (st.bf != null && st.kg) { st.lean = st.kg * (1 - st.bf / 100); st.goalKg = st.lean / (1 - p.goalBf / 100); st.toGo = st.kg - st.goalKg; }
+    st.startKg = ts.length ? ts[0].trend : null;
+    if (st.toGo != null && st.toGo > 0 && st.kg) {
+      st.daysAtTarget = Math.ceil(st.toGo / (p.rate / 100 * st.kg / 7)); st.finishAtTarget = addDays(new Date(), st.daysAtTarget);
+      if (st.rate != null && st.rate < 0) { st.daysLeft = Math.ceil(st.toGo / (-st.rate / 7)); st.finish = addDays(new Date(), st.daysLeft); }
+    }
     return st;
   }
   function verdictOf(st) {
     var p = st.p;
     if (!st.last) return { cls: '', html: 'No weigh-ins yet. Type this morning\'s weight above. After about two weeks the trend and weekly rate appear here.' };
     if (st.rate == null) return { cls: '', html: '<b>' + st.weighIns + ' weigh-in' + (st.weighIns === 1 ? '' : 's') + ' so far.</b> The weekly rate needs about two weeks of mornings, then this tells you whether to change anything.' };
-    var want = -p.rate, kcalPerPct = st.kg * KCAL_PER_KG / 700; var losing = st.pct < 0; var rateTxt = 'Losing ' + fmtKgN(-st.rate) + ' kg a week, ' + Math.abs(st.pct).toFixed(1) + ' % of bodyweight.';
-    if (st.pct > want + RATE_BAND) {
-      var cut = Math.min(500, Math.max(100, round((st.pct - want) * kcalPerPct, 50)));
-      return { cls: 'slow', html: '<b>Too slow.</b> ' + (losing ? rateTxt : (st.pct > RATE_BAND ? 'Gaining ' : 'Flat at ') + fmtKgN(Math.abs(st.rate)) + ' kg a week.') + ' Eat about <b>' + fmtN(cut) + ' kcal less</b> a day' + (st.weekLogged < 5 ? ', and log calories so the number has something to anchor to.' : '.') };
+    var want = -p.rate, off = st.pct - want, kcalPerPct = st.kg * KCAL_PER_KG / 700; var losing = st.pct < 0;
+    var rateTxt = losing ? 'Losing ' + fmtKgN(-st.rate) + ' kg a week, ' + Math.abs(st.pct).toFixed(1) + ' % of bodyweight.' : (st.pct > RATE_BAND ? 'Gaining ' : 'Flat at ') + fmtKgN(Math.abs(st.rate)) + ' kg a week.';
+    // Severity grows with the distance from the target pace: mild inside RATE_MAJOR, major beyond it or when the trend is going up.
+    var sev = Math.abs(off) <= RATE_BAND ? 'ok' : (Math.abs(off) <= RATE_MAJOR && st.pct < RATE_BAND ? 'mild' : 'major');
+    if (sev === 'ok') return { cls: 'ok', html: '<b>On target.</b> ' + rateTxt + ' Change nothing.' };
+    var kcal = Math.min(500, Math.max(100, round(Math.abs(off) * kcalPerPct, 50)));
+    if (off > 0) {
+      var tip = ' Eat about <b>' + fmtN(kcal) + ' kcal less</b> a day: ' + (kcal <= 200 ? 'skip the snack or shrink dinner.' : 'smaller dinners and no extras.') +
+        (st.weekSteps != null && st.weekSteps < STEP_TARGET ? ' A ' + fmtN(STEP_TARGET) + '-step day covers most of that on its own.' : '') + (st.weekLogged < 5 ? ' Log meals so the number has something to anchor to.' : '');
+      return { cls: sev, html: '<b>' + (sev === 'major' ? 'Well off pace.' : 'A bit slow.') + '</b> ' + rateTxt + tip };
     }
-    if (st.pct < want - RATE_BAND) {
-      var add = Math.min(500, Math.max(100, round((want - st.pct) * kcalPerPct, 50)));
-      return { cls: 'fast', html: '<b>Too fast.</b> ' + rateTxt + ' Faster than ' + p.rate + ' % costs muscle. Eat about <b>' + fmtN(add) + ' kcal more</b> a day.' };
-    }
-    return { cls: 'ok', html: '<b>On target.</b> ' + rateTxt + ' Change nothing.' };
+    return { cls: sev, html: '<b>' + (sev === 'major' ? 'Far too fast.' : 'A bit fast.') + '</b> ' + rateTxt + ' Faster than ' + p.rate + ' % costs muscle. Eat about <b>' + fmtN(kcal) + ' kcal more</b> a day, protein first.' };
   }
   function stat(b, s, small) { return '<div class="stat"><b>' + b + (small ? ' <small>' + small + '</small>' : '') + '</b><span>' + s + '</span></div>'; }
   function renderBodyStats() {
@@ -887,6 +902,7 @@
       '<div class="verdict ' + v.cls + '">' + v.html + '</div>' +
       '<svg class="chart" id="b-chart" viewBox="0 0 360 170" aria-label="Scale weight and trend, last eight weeks"></svg><div class="chart-read" id="b-read"></div>';
     renderChart(st);
+    renderGoal(st);
     var mt = st.maintenance ? fmtN(st.maintenance) : '—';
     $('b-intake').innerHTML = '<div class="card-head"><div><span class="eyebrow">Intake</span><h2>' + (st.target ? 'Eat about ' + fmtN(st.target) + ' kcal' : 'Set up your profile') + '</h2></div></div><div class="stats">' +
       stat(mt, st.source ? 'maintenance, ' + st.source : 'maintenance needs height, birth year, and a weight') +
@@ -896,7 +912,7 @@
       (st.target ? '<p class="muted small">' + fmtN(st.maintenance) + ' maintenance minus ' + fmtN(st.deficit) + ' kcal for ' + p.rate + ' % a week. The verdict above overrides this number: when the trend says you are too slow, eat less than it says.</p>' : '');
     var fat = '<div class="card-head"><div><span class="eyebrow">Body fat</span><h2>' + (st.bf != null ? st.bf.toFixed(1) + ' %' : 'Not measured') + '</h2></div>' + (st.measure && st.bf != null ? '<span class="muted small">tape, ' + fmtDate(st.measure.iso) + '</span>' : '') + '</div>';
     if (st.bf != null) fat += '<div class="stats">' + stat(fmtKgN(st.lean), 'kg lean mass') + stat(fmtKgN(st.goalKg), 'kg at ' + p.goalBf + ' % body fat') +
-      stat((st.toGo > 0 ? fmtKgN(st.toGo) : '0'), 'kg to go' + (st.toGo > 0 && st.rate < 0 ? ', about ' + Math.ceil(st.toGo / -st.rate) + ' weeks at this rate' : '')) +
+      stat((st.toGo > 0 ? fmtKgN(st.toGo) : '0'), 'kg to go') +
       stat(fmtKgN(st.kg * st.bf / 100), 'kg fat mass') + '</div><p class="muted small">Tape estimates are about ±3 points, but they move with the real number. Watch the waist trend, not one reading.</p>';
     else fat += '<p class="muted small">' + (!p.height ? 'Add your height in the profile, then ' : '') + 'Measure waist and neck' + (p.sex === 'f' ? ' and hips' : '') + ' in the check-in to estimate body fat and the weight your goal implies.</p>';
     $('b-fat').innerHTML = fat;
@@ -909,6 +925,32 @@
       : '<div class="empty">Nothing yet. Your mornings appear here.</div>');
     $('b-profile-sum').textContent = p.height ? p.height + ' cm · ' + (p.birthYear ? (new Date().getFullYear() - p.birthYear) + ' · ' : '') + 'goal ' + p.goalBf + ' % · ' + p.rate + ' %/wk' : 'Set up';
     $('b-hip-field').hidden = p.sex !== 'f';
+  }
+  // Countdown to the goal weight at the current pace, with progress from the first weigh-in.
+  function renderGoal(st) {
+    var p = st.p; var head, side = '', sub, bar = '', pill = '';
+    if (st.goalKg == null) { head = 'No finish line yet'; sub = (p.height ? '' : 'Add your height in the profile and m') + (p.height ? 'M' : '') + 'easure waist and neck once, and the goal weight for ' + p.goalBf + ' % appears here.'; }
+    else if (st.toGo <= 0) { head = 'You are there'; sub = 'Trend weight ' + st.kg.toFixed(1) + ' kg is at or under ' + fmtKgN(st.goalKg) + ' kg, the weight ' + p.goalBf + ' % body fat implies. Re-measure the tape and set a new goal if you want one.'; }
+    else if (st.rate == null) { head = st.daysAtTarget + ' days at target pace'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>if you hold ' + p.rate + ' % a week</span></div>'; sub = fmtKgN(st.toGo) + ' kg to ' + fmtKgN(st.goalKg) + ' kg. After two weeks of weigh-ins the countdown switches to your real pace.'; }
+    else if (st.rate >= 0) {
+      head = 'Not moving toward it'; side = '<div class="side"><b>' + esc(shortDate(st.finishAtTarget)) + '</b><span>if you hold ' + p.rate + ' % a week</span></div>';
+      pill = '<div class="pace major">' + fmtKgN(st.toGo) + ' kg to go and the trend is ' + (st.pct > RATE_BAND ? 'going up' : 'flat') + ' this fortnight. ' + (st.weekLogged ? 'Eat less than the intake card says' : 'Start logging meals') + ' and get the steps in.</div>';
+      sub = 'The finish date only counts down while the trend falls. Fix the pace first.';
+    }
+    else {
+      var diff = st.daysLeft - st.daysAtTarget; var v = verdictOf(st);
+      head = st.daysLeft + ' day' + (st.daysLeft === 1 ? '' : 's') + ' left';
+      side = '<div class="side"><b>' + esc(shortDate(st.finish)) + '</b><span>at this pace</span></div>';
+      pill = '<div class="pace ' + v.cls + '">' + (v.cls === 'ok' ? 'On pace. The target rate would finish ' + esc(shortDate(st.finishAtTarget)) + ', and you are within the band.'
+        : diff > 0 ? Math.abs(diff) + ' day' + (Math.abs(diff) === 1 ? '' : 's') + ' behind the target pace, which would finish ' + esc(shortDate(st.finishAtTarget)) + '. Tip: eat a little less, see above.'
+        : Math.abs(diff) + ' day' + (Math.abs(diff) === 1 ? '' : 's') + ' ahead of the target pace. Faster is not better here. Tip: eat a little more.') + '</div>';
+      sub = fmtKgN(st.toGo) + ' kg to ' + fmtKgN(st.goalKg) + ' kg, the weight ' + p.goalBf + ' % body fat implies with today\'s lean mass. The pace is the last two weeks, so the date moves with you.';
+    }
+    if (st.goalKg != null && st.startKg != null && st.startKg > st.goalKg) {
+      var pct = Math.max(0, Math.min(100, (st.startKg - st.kg) / (st.startKg - st.goalKg) * 100));
+      bar = '<div class="bar" role="progressbar" aria-valuenow="' + Math.round(pct) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div><div class="bar-lbl"><span>' + fmtKgN(st.startKg) + ' kg start</span><span>' + Math.round(pct) + ' %</span><span>' + fmtKgN(st.goalKg) + ' kg goal</span></div>';
+    }
+    $('b-goal').innerHTML = '<div class="card-head"><div><span class="eyebrow">Finish line</span><h2>' + head + '</h2></div>' + side + '</div>' + pill + bar + '<p class="muted small">' + sub + '</p>';
   }
   function niceStep(raw) { var steps = [0.2, 0.5, 1, 2, 5, 10]; for (var i = 0; i < steps.length; i++) if (steps[i] >= raw) return steps[i]; return 10; }
   function renderChart(st) {
