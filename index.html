@@ -450,7 +450,7 @@
 
     <section>
       <h2>Progression</h2>
-      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Steps follow the dumbbells' settings: 5, 7, 9, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34, 36, 38, 40&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. If set 1 lands under the bottom of the range two sessions in a row at the same weight, the log steps back down one setting; a single miss only repeats the weight, because one bad day is not a trend. Each set also has its own weight: when a set reaches the top of the range, the next set is pre-filled one setting heavier, and when a set misses the bottom, the next set is pre-filled one setting lighter.</p>
+      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Steps follow the dumbbells' settings: 5, 7, 9, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34, 36, 38, 40&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. Take set 1 to one rep in reserve even past the top of the range: going well over moves more than one setting, because the log estimates what the set was worth and picks the setting that should land you mid-range, up to three settings at once. If set 1 lands under the bottom of the range two sessions in a row at the same weight, the log steps back down one setting; a single miss only repeats the weight, because one bad day is not a trend. Each set also has its own weight: when a set reaches the top of the range, the next set is pre-filled one setting heavier, and when a set misses the bottom, the next set is pre-filled one setting lighter.</p>
       <div class="example"><b>Example.</b> Flat press, 2 × 6–10. You get 32 kg × 10 and × 8. Set 1 hit 10, so next time use 34&nbsp;kg. You get 34 × 7 and × 6. Keep 34 until set 1 reaches 10 again.</div>
     </section>
 
@@ -499,6 +499,21 @@
   // Next lighter setting, or null at the lightest; only a backpack move can drop below it, to bodyweight.
   function stepDown(kg, ex) { for (var i = DUMBBELL.length - 1; i >= 0; i--) if (DUMBBELL[i] < kg - 1e-9) return DUMBBELL[i]; return ex && ex.load === 'bw' && kg > 0 ? 0 : null; }
   function snapKg(n) { var best = DUMBBELL[0]; DUMBBELL.forEach(function (w) { if (Math.abs(w - n) < Math.abs(best - n)) best = w; }); return best; }
+  var MAX_RUNGS = 3; // most settings a single set can move the weight up
+  // Where to go after a set at or past the top of its range. Reaching the top is one setting. Past it, the Epley estimate
+  // of what the set was worth (kg × (1 + reps / 30)) picks the heaviest setting predicted to still land mid-range, up to
+  // MAX_RUNGS. Backpack moves and timed sets always move one setting: the estimate does not apply to them.
+  function jumpUp(ex, kg, reps) {
+    var up = stepUp(kg); if (up == null) return null;
+    if (ex.load === 'bw' || ex.unit === 's' || reps == null || reps <= ex.reps[1]) return up;
+    var worth = kg * (1 + reps / 30), mid = (ex.reps[0] + ex.reps[1]) / 2, best = up, rungs = 1;
+    for (var i = DUMBBELL.indexOf(up) + 1; i < DUMBBELL.length && rungs < MAX_RUNGS; i++) {
+      if (30 * (worth / DUMBBELL[i] - 1) < mid - 1e-6) break;
+      best = DUMBBELL[i]; rungs++;
+    }
+    return best;
+  }
+  function rungsBetween(a, b) { var n = 0; DUMBBELL.forEach(function (w) { if (w > a + 1e-9 && w <= b + 1e-9) n++; }); return n; }
   var SWIPE_DELETE = 88; // px a set row must be swiped left to delete it
   var TARGET_PER_WEEK = 6;
   var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab', BODY_KEY = 'ppl.body';
@@ -671,9 +686,10 @@
     var keep = { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), dir: false };
     if (lastKg == null || s1.reps == null) return keep;
     if (s1.reps >= hi) {
-      var up = stepUp(lastKg);
+      var up = jumpUp(ex, lastKg, s1.reps);
       if (up == null) { keep.hint = 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' at the heaviest dumbbell. Slow the lowering or add a pause, see the ladder in Program.'; return keep; }
-      return { kg: up, hint: 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + ' to ' + fmtKg(ex, up) + '.', dir: 'up' };
+      var rungs = rungsBetween(lastKg, up);
+      return { kg: up, hint: 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + ' to ' + fmtKg(ex, up) + (rungs > 1 ? ', ' + (rungs === 2 ? 'two' : 'three') + ' settings for ' + (s1.reps - hi) + ' over the top' : '') + '.', dir: 'up' };
     }
     if (s1.reps < lo) {
       var prev = recent[1]; var p1 = prev && prev.sets[0];
@@ -695,8 +711,9 @@
     var s = PROGRAM[selected];
     if (!draft || draft.v !== 2 || draft.session !== s.key) draft = { v: 2, session: s.key, date: todayISO(), ex: {}, notes: '' };
     s.ex.forEach(function (ex) {
-      if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '' }, { kg: kg, reps: '' }], suggested: sg.dir }; }
+      if (!draft.ex[ex.key]) { var sg = suggest(ex); var kg = sg.kg === '' ? '' : String(sg.kg); draft.ex[ex.key] = { sets: [{ kg: kg, reps: '', auto: true }, { kg: kg, reps: '', auto: true }], suggested: sg.dir }; }
       var d = draft.ex[ex.key]; if (ex.warm && !d.warm) d.warm = warmSets(ex, d.sets[0].kg);
+      d.sets.forEach(function (st) { if (st.auto == null) st.auto = st.reps === ''; }); // drafts saved before the flag existed
     });
   }
   function draftTouched() {
@@ -705,16 +722,14 @@
     for (var i = 0; i < keys.length; i++) if (draft.ex[keys[i]].sets.some(function (st) { return st.reps !== ''; })) return true;
     return !!(draft.notes && draft.notes.trim());
   }
-  // Set weights within a session. A set without reps "mirrors" the set before it: it carries the same kg,
-  // or that kg plus one step once the previous set reaches the top of the rep range. Mirroring sets follow
-  // edits automatically; a set the user typed a different kg into is left alone.
-  function stepOf(kg) { var n = num(kg); var u = n == null ? null : stepUp(n); return u == null ? null : String(u); }
-  function stepDownOf(kg, ex) { var n = num(kg); var dn = n == null ? null : stepDown(n, ex); return dn == null ? null : String(dn); }
-  function mirrors(ex, d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg) || st.kg === stepDownOf(prev.kg, ex)); }
-  // What set j's kg should be, given set j-1's reps: one step up at the top of the range, one step down under the bottom.
+  // Set weights within a session. A set without reps whose kg the user has not typed (`auto`) "mirrors" the set before
+  // it: the same kg, a jump up once the previous set reaches the top of the rep range, or one setting down when it misses
+  // the bottom. Mirroring sets follow edits to the sets before them; typing a kg into a set clears `auto` for good.
+  function mirrors(d, j) { var st = d.sets[j]; return st.reps === '' && st.auto !== false; }
   function wantedKg(ex, d, j) {
-    var prev = d.sets[j - 1]; var reps = num(prev.reps); if (num(prev.kg) == null || reps == null) return prev.kg;
-    return (reps >= ex.reps[1] ? stepOf(prev.kg) : (reps < ex.reps[0] ? stepDownOf(prev.kg, ex) : prev.kg)) || prev.kg;
+    var prev = d.sets[j - 1]; var kg = num(prev.kg), reps = num(prev.reps); if (kg == null || reps == null) return prev.kg;
+    var to = reps >= ex.reps[1] ? jumpUp(ex, kg, reps) : (reps < ex.reps[0] ? stepDown(kg, ex) : kg);
+    return to == null ? prev.kg : String(to);
   }
   // 'up' | 'down' | null: whether set j currently sits on an automatic step from set j-1.
   function stepDir(ex, d, j) {
@@ -722,16 +737,8 @@
     if (want === prev.kg || d.sets[j].kg !== want) return null;
     return num(prev.reps) >= ex.reps[1] ? 'up' : 'down';
   }
-  function setKg(d, j, value) {
-    var prevOld = d.sets[j].kg; if (prevOld === value) return;
-    d.sets[j].kg = value;
-    for (var k = j + 1; k < d.sets.length; k++) {
-      var st = d.sets[k]; if (st.reps !== '' || (st.kg !== prevOld && st.kg !== stepOf(prevOld))) break;
-      prevOld = st.kg; st.kg = value;
-    }
-  }
   function applySteps(ex, d, from) {
-    for (var j = from; j < d.sets.length - 1; j++) if (mirrors(ex, d, j + 1) && num(d.sets[j].kg) != null) setKg(d, j + 1, wantedKg(ex, d, j + 1));
+    for (var j = Math.max(0, from); j < d.sets.length - 1; j++) if (mirrors(d, j + 1)) d.sets[j + 1].kg = wantedKg(ex, d, j + 1);
   }
   function kgClass(dir) { return 'kg' + (dir ? ' suggested' : '') + (dir === 'down' ? ' down' : ''); }
   function syncRow(row, ex, d) {
@@ -1176,7 +1183,7 @@
     var key = row.getAttribute('data-ex'); var ex = exInSession(PROGRAM[selected], key); var d = draft.ex[key];
     var i = +t.getAttribute('data-i'); var k = t.getAttribute('data-k'); var wi = t.getAttribute('data-w');
     if (wi != null) { var w = d.warm[+wi]; if (!w) return; w[k] = t.value; if (k === 'kg') w.auto = false; saveDraft(); return; }
-    if (k === 'kg') { setKg(d, i, t.value); d.suggested = false; if (i === 0) syncWarm(ex, d); }
+    if (k === 'kg') { d.sets[i].kg = t.value; d.sets[i].auto = false; d.suggested = false; if (i === 0) syncWarm(ex, d); }
     else if (k === 'reps') d.sets[i].reps = t.value;
     else return;
     applySteps(ex, d, i); syncRow(row, ex, d); saveDraft();
@@ -1225,7 +1232,7 @@
     var add = e.target.closest('[data-add]');
     if (add) {
       var k = add.getAttribute('data-add'); var ex = exInSession(PROGRAM[selected], k); var d = draft.ex[k]; var prev = d.sets[d.sets.length - 1];
-      d.sets.push({ kg: prev.kg, reps: '' }); applySteps(ex, d, d.sets.length - 2);
+      d.sets.push({ kg: prev.kg, reps: '', auto: true }); applySteps(ex, d, d.sets.length - 2);
       saveDraft(); renderToday(); $('r' + d.sets.length + '-' + k).focus(); return;
     }
     if (e.target.id === 'clear') { draft = null; saveDraft(); renderToday(); }
