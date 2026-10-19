@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>PPL Log</title>
 <meta name="description" content="Home push/pull/legs training log. The next session is prepared with last time's weights; you enter kg and reps.">
 <meta name="theme-color" content="#ececec" media="(prefers-color-scheme: light)">
@@ -46,7 +46,9 @@
 
   * { box-sizing: border-box; }
   html, body { height: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.3; font-weight: 500; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; font-variant-numeric: tabular-nums; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  /* Inputs stay at 16 px or more: anything smaller makes iOS zoom the page when a field is focused. */
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.3; font-weight: 500; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; touch-action: manipulation; font-variant-numeric: tabular-nums; }
   .wrap {
     max-width: 640px; margin: 0 auto;
     padding-top: calc(8px + env(safe-area-inset-top, 0px));
@@ -116,7 +118,7 @@
   .pick[aria-pressed="true"] span, .pick[aria-pressed="true"] .next { color: inherit; opacity: .75; }
 
   /* Today form */
-  input[type="date"] { font: inherit; font-size: 14px; font-weight: 600; padding: 5px 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); min-height: 34px; width: 150px; -webkit-appearance: none; appearance: none; }
+  input[type="date"] { font: inherit; font-size: 16px; font-weight: 600; padding: 5px 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); min-height: 34px; width: 150px; -webkit-appearance: none; appearance: none; }
   .exlist { display: flex; flex-direction: column; }
   .ex { display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-top: 1px solid var(--line); }
   .ex-info { display: flex; flex-direction: column; gap: 0; min-width: 0; }
@@ -137,7 +139,7 @@
   .sets .n { user-select: none; -webkit-user-select: none; }
   .sets .h { font-family: var(--display); font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
   .sets .n { font-family: var(--display); font-size: 9.5px; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; }
-  .sets input { width: 100%; min-width: 0; font: inherit; font-family: var(--display); font-size: 15px; font-weight: 600; text-align: center; padding: 7px 2px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; min-height: 36px; }
+  .sets input { width: 100%; min-width: 0; font: inherit; font-family: var(--display); font-size: 16px; font-weight: 600; text-align: center; padding: 7px 2px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; min-height: 36px; }
   .sets input::-webkit-outer-spin-button, .sets input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .set.warm .n { color: var(--accent-ink); }
   .set.warm input { border-style: dashed; border-color: var(--accent-ink); background: transparent; color: var(--muted); }
@@ -149,7 +151,7 @@
   .field label { font-family: var(--display); font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
   .tag { display: inline-block; font-family: var(--display); font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-accent); background: var(--accent); padding: 2px 5px; margin-left: 6px; vertical-align: middle; }
 
-  textarea { font: inherit; font-size: 15px; width: 100%; min-height: 44px; padding: 7px 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); resize: vertical; }
+  textarea { font: inherit; font-size: 16px; width: 100%; min-height: 44px; padding: 7px 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); resize: vertical; }
   .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .btn { appearance: none; border: 1px solid var(--ink); padding: 9px 16px; font: inherit; font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; background: var(--accent); color: var(--on-accent); min-height: 38px; }
   .btn:disabled { opacity: .45; cursor: default; }
@@ -221,7 +223,7 @@
   /* Body tab: morning check-in form, trend chart, intake and body-fat stats, profile */
   .small { font-size: 12.5px; }
   .bgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .fin, select.fin { width: 100%; min-width: 0; font: inherit; font-family: var(--display); font-size: 14px; font-weight: 600; padding: 7px 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; -webkit-appearance: none; appearance: none; min-height: 38px; }
+  .fin, select.fin { width: 100%; min-width: 0; font: inherit; font-family: var(--display); font-size: 16px; font-weight: 600; padding: 7px 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); -moz-appearance: textfield; -webkit-appearance: none; appearance: none; min-height: 38px; }
   .fin::-webkit-outer-spin-button, .fin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .fin::placeholder { color: var(--muted); opacity: .7; font-weight: 500; }
   .fin.filled { border-color: var(--accent-ink); }
@@ -448,7 +450,7 @@
 
     <section>
       <h2>Progression</h2>
-      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Dumbbell steps are 2 to 2.5&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. If set 1 lands under the bottom of the range two sessions in a row at the same weight, the log steps back down 2&nbsp;kg; a single miss only repeats the weight, because one bad day is not a trend. Each set also has its own weight: when a set reaches the top of the range, the next set is pre-filled 2&nbsp;kg heavier, and when a set misses the bottom, the next set is pre-filled 2&nbsp;kg lighter.</p>
+      <p class="muted">Double progression. When set 1 reaches the top of the rep range with good form, add weight next session and start again from the bottom of the range. Steps follow the dumbbells' settings: 5, 7, 9, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34, 36, 38, 40&nbsp;kg per hand. Only set 1 decides this. Set 2 is to failure and will vary. The log applies this rule for you. If set 1 lands under the bottom of the range two sessions in a row at the same weight, the log steps back down one setting; a single miss only repeats the weight, because one bad day is not a trend. Each set also has its own weight: when a set reaches the top of the range, the next set is pre-filled one setting heavier, and when a set misses the bottom, the next set is pre-filled one setting lighter.</p>
       <div class="example"><b>Example.</b> Flat press, 2 × 6–10. You get 32 kg × 10 and × 8. Set 1 hit 10, so next time use 34&nbsp;kg. You get 34 × 7 and × 6. Keep 34 until set 1 reaches 10 again.</div>
     </section>
 
@@ -491,7 +493,12 @@
 (function () {
   'use strict';
 
-  var STEP = 2; // kg per dumbbell when set 1 hits the top of its range
+  var DUMBBELL = [5, 7, 9, 11, 13, 15, 18, 20, 22, 25, 27, 29, 32, 34, 36, 38, 40]; // kg settings of the adjustable dumbbells; every step lands on one
+  // Next heavier setting, or null at the heaviest. A backpack move at bodyweight (0) steps onto the lightest dumbbell.
+  function stepUp(kg) { for (var i = 0; i < DUMBBELL.length; i++) if (DUMBBELL[i] > kg + 1e-9) return DUMBBELL[i]; return null; }
+  // Next lighter setting, or null at the lightest; only a backpack move can drop below it, to bodyweight.
+  function stepDown(kg, ex) { for (var i = DUMBBELL.length - 1; i >= 0; i--) if (DUMBBELL[i] < kg - 1e-9) return DUMBBELL[i]; return ex && ex.load === 'bw' && kg > 0 ? 0 : null; }
+  function snapKg(n) { var best = DUMBBELL[0]; DUMBBELL.forEach(function (w) { if (Math.abs(w - n) < Math.abs(best - n)) best = w; }); return best; }
   var SWIPE_DELETE = 88; // px a set row must be swiped left to delete it
   var TARGET_PER_WEEK = 6;
   var STORE_KEY = 'ppl.sessions', DRAFT_KEY = 'ppl.draft', TAB_KEY = 'ppl.tab', BODY_KEY = 'ppl.body';
@@ -663,19 +670,24 @@
     var s1 = last.sets[0]; var lastKg = s1.kg; var lo = ex.reps[0], hi = ex.reps[1];
     var keep = { kg: lastKg == null ? '' : lastKg, hint: fmtDate(last.date) + ': ' + fmtSets(ex, last.sets), dir: false };
     if (lastKg == null || s1.reps == null) return keep;
-    if (s1.reps >= hi) return { kg: lastKg + STEP, hint: 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + '.', dir: 'up' };
+    if (s1.reps >= hi) {
+      var up = stepUp(lastKg);
+      if (up == null) { keep.hint = 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' at the heaviest dumbbell. Slow the lowering or add a pause, see the ladder in Program.'; return keep; }
+      return { kg: up, hint: 'Set 1 hit ' + fmtReps(ex, s1.reps) + ' on ' + fmtDate(last.date) + '. Up from ' + fmtKg(ex, lastKg) + ' to ' + fmtKg(ex, up) + '.', dir: 'up' };
+    }
     if (s1.reps < lo) {
       var prev = recent[1]; var p1 = prev && prev.sets[0];
       var missedTwice = p1 && p1.kg === lastKg && p1.reps != null && p1.reps < lo;
-      if (missedTwice && lastKg - STEP >= 0) return { kg: lastKg - STEP, hint: 'Set 1 under ' + lo + ' twice at ' + fmtKg(ex, lastKg) + ' (' + p1.reps + ', then ' + s1.reps + '). Down to ' + fmtKg(ex, lastKg - STEP) + '.', dir: 'down' };
-      keep.hint += missedTwice ? '. Set 1 under ' + lo + ' twice at bodyweight. Use an easier variation or slower reps.' : '. Set 1 under ' + lo + ', try once more; a second miss steps down.';
+      var dn = stepDown(lastKg, ex);
+      if (missedTwice && dn != null) return { kg: dn, hint: 'Set 1 under ' + lo + ' twice at ' + fmtKg(ex, lastKg) + ' (' + p1.reps + ', then ' + s1.reps + '). Down to ' + fmtKg(ex, dn) + '.', dir: 'down' };
+      keep.hint += missedTwice ? '. Set 1 under ' + lo + ' twice at ' + (lastKg === 0 ? 'bodyweight. Use an easier variation or slower reps.' : 'the lightest dumbbell. Slow the reps down.') : '. Set 1 under ' + lo + ', try once more; a second miss steps down.';
     }
     return keep;
   }
   // Warm-up sets for the session's first compound: 50 % × 8 and 75 % × 4 of set 1, rounded to the dumbbell step; two
   // light bodyweight sets when the exercise is loaded by backpack. They follow set 1's kg until the user edits them.
   var WARM = [{ f: 0.5, reps: '8', bwReps: '5' }, { f: 0.75, reps: '4', bwReps: '3' }];
-  function warmKgFor(ex, kg, f) { var n = num(kg); if (ex.load === 'bw') return '0'; return n == null ? '' : String(Math.max(0, Math.round(n * f / STEP) * STEP)); }
+  function warmKgFor(ex, kg, f) { var n = num(kg); if (ex.load === 'bw') return '0'; return n == null ? '' : String(snapKg(n * f)); }
   function warmSets(ex, kg) { return WARM.map(function (w) { return { kg: warmKgFor(ex, kg, w.f), reps: ex.load === 'bw' ? w.bwReps : w.reps, auto: true }; }); }
   function syncWarm(ex, d) { (d.warm || []).forEach(function (w, j) { if (w.auto) w.kg = warmKgFor(ex, d.sets[0].kg, WARM[j].f); }); }
   function warmLabel(ex, j) { return ex.load === 'bw' ? 'Warm' : Math.round(WARM[j].f * 100) + ' %'; }
@@ -696,13 +708,13 @@
   // Set weights within a session. A set without reps "mirrors" the set before it: it carries the same kg,
   // or that kg plus one step once the previous set reaches the top of the rep range. Mirroring sets follow
   // edits automatically; a set the user typed a different kg into is left alone.
-  function stepOf(kg) { var n = num(kg); return n == null ? null : String(n + STEP); }
-  function stepDownOf(kg) { var n = num(kg); return n == null ? null : String(Math.max(0, n - STEP)); }
-  function mirrors(d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg) || st.kg === stepDownOf(prev.kg)); }
+  function stepOf(kg) { var n = num(kg); var u = n == null ? null : stepUp(n); return u == null ? null : String(u); }
+  function stepDownOf(kg, ex) { var n = num(kg); var dn = n == null ? null : stepDown(n, ex); return dn == null ? null : String(dn); }
+  function mirrors(ex, d, j) { var prev = d.sets[j - 1], st = d.sets[j]; return st.reps === '' && (st.kg === prev.kg || st.kg === stepOf(prev.kg) || st.kg === stepDownOf(prev.kg, ex)); }
   // What set j's kg should be, given set j-1's reps: one step up at the top of the range, one step down under the bottom.
   function wantedKg(ex, d, j) {
     var prev = d.sets[j - 1]; var reps = num(prev.reps); if (num(prev.kg) == null || reps == null) return prev.kg;
-    return reps >= ex.reps[1] ? stepOf(prev.kg) : (reps < ex.reps[0] ? stepDownOf(prev.kg) : prev.kg);
+    return (reps >= ex.reps[1] ? stepOf(prev.kg) : (reps < ex.reps[0] ? stepDownOf(prev.kg, ex) : prev.kg)) || prev.kg;
   }
   // 'up' | 'down' | null: whether set j currently sits on an automatic step from set j-1.
   function stepDir(ex, d, j) {
@@ -719,7 +731,7 @@
     }
   }
   function applySteps(ex, d, from) {
-    for (var j = from; j < d.sets.length - 1; j++) if (mirrors(d, j + 1) && num(d.sets[j].kg) != null) setKg(d, j + 1, wantedKg(ex, d, j + 1));
+    for (var j = from; j < d.sets.length - 1; j++) if (mirrors(ex, d, j + 1) && num(d.sets[j].kg) != null) setKg(d, j + 1, wantedKg(ex, d, j + 1));
   }
   function kgClass(dir) { return 'kg' + (dir ? ' suggested' : '') + (dir === 'down' ? ' down' : ''); }
   function syncRow(row, ex, d) {

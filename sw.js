@@ -1,5 +1,5 @@
 // Offline cache for the PPL Log app. Bump CACHE when the app files change.
-var CACHE = 'ppl-log-v15';
+var CACHE = 'ppl-log-v16';
 var FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
