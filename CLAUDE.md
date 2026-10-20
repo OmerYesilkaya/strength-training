@@ -50,5 +50,5 @@ Omer's personal home training program and the small web app that logs it. Phone 
 - Deploy is `git push` to `main`. **Bump `CACHE` in `sw.js` on every change to app files** or phones keep the old version.
 - Test locally with `python3 -m http.server 8765 --bind 127.0.0.1` from the repo root and the Claude in Chrome tools. The Chrome viewport cannot be resized by the tools; to see phone width, serve a scratch page that embeds the app in a 390 px iframe. The drag tool does not emit pointerdown, so test swipes with synthetic `PointerEvent`s.
 - Before telling Omer a change is live, poll `https://omeryesilkaya.github.io/strength-training/sw.js` for the new `CACHE` value.
-- iOS freezes the home-screen icon at install time. An icon change needs the app removed and re-added; logged data survives because it lives in Safari's storage for the origin.
+- iOS freezes the home-screen icon at install time. An icon change needs the app removed and re-added. The home-screen app keeps its own storage, separate from Safari, so assume removing the icon deletes the logged data: export JSON from History first and import it after reinstalling. Home-screen web apps are exempt from Safari's 7-day storage eviction.
 - Omer's rules: no Claude co-author lines in commits. Prefer quality and simplicity over development cost. Keep unrelated fixes in their own commits.
